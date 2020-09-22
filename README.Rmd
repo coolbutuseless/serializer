@@ -40,6 +40,17 @@ free to re-use in your own projects.
 If you want a rock solid version of this package that already exists, use [RApiSerialize](https://cran.r-project.org/web/packages/RApiSerialize/index.html).
 
 
+## What's in the box
+
+* `marshall()`/`unmarshall()` are direct analogues for `base::serialize()` and 
+  `base::unserialize()`
+* `calc_marshalled_size()` calculates the exact size of the serialized
+  representation of an object.
+* `marshall_minimize_malloc()` is a modified version of `marshall()` which 
+  minimises memory allocations by pre-calculating the final size of the 
+  serialized representation.  It speeds up the serialization process for
+  larger objects.
+
 ## Installation
 
 You can install from [GitHub](https://github.com/coolbutuseless/serializer) with:

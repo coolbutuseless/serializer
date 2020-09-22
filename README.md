@@ -25,6 +25,17 @@ If you want a rock solid version of this package that already exists,
 use
 [RApiSerialize](https://cran.r-project.org/web/packages/RApiSerialize/index.html).
 
+## What’s in the box
+
+  - `marshall()`/`unmarshall()` are direct analogues for
+    `base::serialize()` and `base::unserialize()`
+  - `calc_marshalled_size()` calculates the exact size of the serialized
+    representation of an object.
+  - `marshall_minimize_malloc()` is a modified version of `marshall()`
+    which minimises memory allocations by pre-calculating the final size
+    of the serialized representation. It speeds up the serialization
+    process for larger objects.
+
 ## Installation
 
 You can install from
@@ -158,10 +169,10 @@ res %>%
 
 | expression                   |  median | itr/sec |  MB |   GB/s |
 | :--------------------------- | ------: | ------: | --: | -----: |
-| calc\_marshalled\_size(obj1) | 11.38µs |   87372 | 114 | 9787.1 |
-| calc\_marshalled\_size(obj2) |  6.64µs |  146849 |   5 |  735.1 |
-| calc\_marshalled\_size(obj3) |  7.36µs |  132688 |  38 | 5042.0 |
-| calc\_marshalled\_size(obj4) |  4.38µs |  229417 |   0 |    0.0 |
+| calc\_marshalled\_size(obj1) | 11.55µs |   84881 | 114 | 9641.3 |
+| calc\_marshalled\_size(obj2) |  6.66µs |  146996 |   5 |  733.0 |
+| calc\_marshalled\_size(obj3) |  7.66µs |  127831 |  38 | 4846.5 |
+| calc\_marshalled\_size(obj4) |  3.22µs |  251210 |   0 |    0.0 |
 
 Maximum possible throughput of serialization
 
@@ -194,8 +205,8 @@ res %>%
 
 | expression                       | median |  itr/sec |
 | :------------------------------- | -----: | -------: |
-| marshall(obj1)                   | 83.2µs | 11287.57 |
-| marshall\_minimize\_malloc(obj1) | 67.1µs | 13964.31 |
+| marshall(obj1)                   | 85.9µs | 10960.12 |
+| marshall\_minimize\_malloc(obj1) | 69.6µs | 13612.89 |
 
 ``` r
 
@@ -223,10 +234,10 @@ res %>%
   knitr::kable()
 ```
 
-| expression                       |  median |   itr/sec |
-| :------------------------------- | ------: | --------: |
-| marshall(obj2)                   | 10.28ms |  86.59292 |
-| marshall\_minimize\_malloc(obj2) |  2.13ms | 441.35227 |
+| expression                       | median |   itr/sec |
+| :------------------------------- | -----: | --------: |
+| marshall(obj2)                   | 9.79ms |  91.68964 |
+| marshall\_minimize\_malloc(obj2) | 2.29ms | 379.68270 |
 
 ``` r
 
