@@ -36,9 +36,9 @@ void count_bytes(R_outpstream_t stream, void *src, int length) {
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Serialize an R object
+// Serialize an R object, but ony count the bytes.  C function
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SEXP calc_marshalled_size_(SEXP robj) {
+int calc_marshalled_size(SEXP robj) {
 
   // Initialise the count
   int count = 0;
@@ -61,6 +61,14 @@ SEXP calc_marshalled_size_(SEXP robj) {
   // Serialize the object into the output_stream
   R_Serialize(robj, &output_stream);
 
-  return ScalarInteger(count);
+  return count;
 }
 
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Serialize an R object, but ony count the bytes. R shim function
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+SEXP calc_marshalled_size_(SEXP robj) {
+  return ScalarInteger(calc_marshalled_size(robj));
+}

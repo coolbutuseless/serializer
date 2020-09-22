@@ -13,6 +13,9 @@ knitr::opts_chunk$set(
 )
 
 library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(bench)
 library(lobstr)
 library(serializer)
 ```
@@ -64,13 +67,32 @@ remotes::install_github('coolbutuseless/serializer')
 ```{r example}
 library(serializer)
 
-v1 <- serializer::marshall(head(mtcars))
-v2 <- base::serialize(mtcars, NULL, xdr = FALSE)
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# The object to be serialized
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+dat <- head(mtcars, 3)
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Calculate exactly how many bytes this will take once serialized
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+serializer::calc_marshalled_size(dat)
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Serialized results from this package and base::serialize should be identical
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+v1 <- serializer::marshall(head(dat))
+v2 <- base::serialize(dat, NULL, xdr = FALSE)
 identical(v1, v2)
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# The serialized length should match the calculation from earlier
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+length(v1)
 head(v1, 200)
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Unmarshall the raw bytes back into an object  
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 serializer::unmarshall(v1)
 ```
 
@@ -91,23 +113,27 @@ memory allocation or copying.
 
 
 ```{r}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Test objects
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 N <- 1e7
-obj1 <- data.frame(
-  x = sample(N),
-  y = runif(N)
-)
-
+obj1 <- data.frame(x = sample(N), y = runif(N))
 obj2 <- do.call(rbind, replicate(1000, iris, simplify = FALSE))
-
 obj3 <- sample(N)
-
 obj4 <- sample(10)
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Calc sizes of test objects
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 (n1 <- lobstr::obj_size(obj1))
 (n2 <- lobstr::obj_size(obj2))
 (n3 <- lobstr::obj_size(obj3))
 (n4 <- lobstr::obj_size(obj4))
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# go through seritalization process, but only count the bytes
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 res <- bench::mark(
   calc_marshalled_size(obj1),
   calc_marshalled_size(obj2),
@@ -117,6 +143,9 @@ res <- bench::mark(
 )
 
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# calc theoretical upper limit
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 res %>% 
   mutate(MB = round(c(n1, n2, n3, n4)/1024^2)) %>%
   mutate(`GB/s` = round(MB/1024 / as.numeric(median), 1)) %>%
@@ -124,6 +153,59 @@ res %>%
   select(expression, median, `itr/sec`, MB, `GB/s`) %>%
   knitr::kable(caption = "Maximum possible throughput of serialization")
 ```
+
+
+## Minimising memory allocations can increase serialization speed
+
+`marshall_minimize_malloc()` pre-calculates the size of the serialized data,
+and performs only **1** memory allocation.
+
+For small objects, the pre-calculation of size increases overall serialization time,
+but for medium-to-large objects it is often a win.
+
+#### data.frame with 1e4 rows
+
+```{r}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# data.frame with 1e4 rows
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+N <- 1e4; obj1 <- data.frame(x = sample(N), y = runif(N))
+
+res <- bench::mark(
+  marshall(obj1),
+  marshall_minimize_malloc(obj1),
+  check = FALSE
+)
+
+res %>%
+  select(expression, median, `itr/sec`) %>%
+  knitr::kable()
+
+plot(res) + theme_bw()
+```
+
+
+#### data.frame with 1e6 rows
+
+```{r}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# data.frame with 1e6 rows
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+N <- 1e6; obj2 <- data.frame(x = sample(N), y = runif(N))
+
+res <- bench::mark(
+  marshall(obj2),
+  marshall_minimize_malloc(obj2),
+  check = FALSE
+)
+
+res %>%
+  select(expression, median, `itr/sec`) %>%
+  knitr::kable()
+
+plot(res) + theme_bw()
+```
+
 
 
 

@@ -10,5 +10,6 @@ calc_marshalled_size(robj)
 \item{robj}{R object}
 }
 \description{
-Calculate the size of the R object when it is serialized
+This function goes through all the motions of serializing an object, but
+does nothing with the bytes other than to tally the total length.
 }

@@ -2,5 +2,6 @@
 
 export(calc_marshalled_size)
 export(marshall)
+export(marshall_minimize_malloc)
 export(unmarshall)
 useDynLib(serializer, .registration=TRUE)

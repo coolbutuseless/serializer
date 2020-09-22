@@ -51,30 +51,48 @@ remotes::install_github('coolbutuseless/serializer')
 ``` r
 library(serializer)
 
-v1 <- serializer::marshall(head(mtcars))
-v2 <- base::serialize(mtcars, NULL, xdr = FALSE)
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# The object to be serialized
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+dat <- head(mtcars, 3)
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Calculate exactly how many bytes this will take once serialized
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+serializer::calc_marshalled_size(dat)
+#> [1] 674
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Serialized results from this package and base::serialize should be identical
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+v1 <- serializer::marshall(head(dat))
+v2 <- base::serialize(dat, NULL, xdr = FALSE)
 identical(v1, v2)
-#> [1] FALSE
+#> [1] TRUE
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# The serialized length should match the calculation from earlier
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+length(v1)
+#> [1] 674
 head(v1, 200)
 #>   [1] 42 0a 03 00 00 00 02 00 04 00 00 05 03 00 05 00 00 00 55 54 46 2d 38 13 03
-#>  [26] 00 00 0b 00 00 00 0e 00 00 00 06 00 00 00 00 00 00 00 00 00 35 40 00 00 00
-#>  [51] 00 00 00 35 40 cd cc cc cc cc cc 36 40 66 66 66 66 66 66 35 40 33 33 33 33
-#>  [76] 33 b3 32 40 9a 99 99 99 99 19 32 40 0e 00 00 00 06 00 00 00 00 00 00 00 00
-#> [101] 00 18 40 00 00 00 00 00 00 18 40 00 00 00 00 00 00 10 40 00 00 00 00 00 00
-#> [126] 18 40 00 00 00 00 00 00 20 40 00 00 00 00 00 00 18 40 0e 00 00 00 06 00 00
-#> [151] 00 00 00 00 00 00 00 64 40 00 00 00 00 00 00 64 40 00 00 00 00 00 00 5b 40
-#> [176] 00 00 00 00 00 20 70 40 00 00 00 00 00 80 76 40 00 00 00 00 00 20 6c 40 0e
+#>  [26] 00 00 0b 00 00 00 0e 00 00 00 03 00 00 00 00 00 00 00 00 00 35 40 00 00 00
+#>  [51] 00 00 00 35 40 cd cc cc cc cc cc 36 40 0e 00 00 00 03 00 00 00 00 00 00 00
+#>  [76] 00 00 18 40 00 00 00 00 00 00 18 40 00 00 00 00 00 00 10 40 0e 00 00 00 03
+#> [101] 00 00 00 00 00 00 00 00 00 64 40 00 00 00 00 00 00 64 40 00 00 00 00 00 00
+#> [126] 5b 40 0e 00 00 00 03 00 00 00 00 00 00 00 00 80 5b 40 00 00 00 00 00 80 5b
+#> [151] 40 00 00 00 00 00 40 57 40 0e 00 00 00 03 00 00 00 33 33 33 33 33 33 0f 40
+#> [176] 33 33 33 33 33 33 0f 40 cd cc cc cc cc cc 0e 40 0e 00 00 00 03 00 00 00 f6
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Unmarshall the raw bytes back into an object  
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 serializer::unmarshall(v1)
-#>                    mpg cyl disp  hp drat    wt  qsec vs am gear carb
-#> Mazda RX4         21.0   6  160 110 3.90 2.620 16.46  0  1    4    4
-#> Mazda RX4 Wag     21.0   6  160 110 3.90 2.875 17.02  0  1    4    4
-#> Datsun 710        22.8   4  108  93 3.85 2.320 18.61  1  1    4    1
-#> Hornet 4 Drive    21.4   6  258 110 3.08 3.215 19.44  1  0    3    1
-#> Hornet Sportabout 18.7   8  360 175 3.15 3.440 17.02  0  0    3    2
-#> Valiant           18.1   6  225 105 2.76 3.460 20.22  1  0    3    1
+#>                mpg cyl disp  hp drat    wt  qsec vs am gear carb
+#> Mazda RX4     21.0   6  160 110 3.90 2.620 16.46  0  1    4    4
+#> Mazda RX4 Wag 21.0   6  160 110 3.90 2.875 17.02  0  1    4    4
+#> Datsun 710    22.8   4  108  93 3.85 2.320 18.61  1  1    4    1
 ```
 
 ## What’s the upper bound on serialization speed?
@@ -93,18 +111,19 @@ just passing *pointers* + *lengths* to an output stream, and doing very
 very little actual memory allocation or copying.
 
 ``` r
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Test objects
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 N <- 1e7
-obj1 <- data.frame(
-  x = sample(N),
-  y = runif(N)
-)
-
+obj1 <- data.frame(x = sample(N), y = runif(N))
 obj2 <- do.call(rbind, replicate(1000, iris, simplify = FALSE))
-
 obj3 <- sample(N)
-
 obj4 <- sample(10)
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Calc sizes of test objects
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 (n1 <- lobstr::obj_size(obj1))
 #> 120,000,848 B
 (n2 <- lobstr::obj_size(obj2))
@@ -114,6 +133,9 @@ obj4 <- sample(10)
 (n4 <- lobstr::obj_size(obj4))
 #> 96 B
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# go through seritalization process, but only count the bytes
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 res <- bench::mark(
   calc_marshalled_size(obj1),
   calc_marshalled_size(obj2),
@@ -123,6 +145,9 @@ res <- bench::mark(
 )
 
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# calc theoretical upper limit
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 res %>% 
   mutate(MB = round(c(n1, n2, n3, n4)/1024^2)) %>%
   mutate(`GB/s` = round(MB/1024 / as.numeric(median), 1)) %>%
@@ -131,14 +156,84 @@ res %>%
   knitr::kable(caption = "Maximum possible throughput of serialization")
 ```
 
-| expression                   |  median | itr/sec |  MB |    GB/s |
-| :--------------------------- | ------: | ------: | --: | ------: |
-| calc\_marshalled\_size(obj1) | 11.08µs |   86847 | 114 | 10050.4 |
-| calc\_marshalled\_size(obj2) |   6.2µs |  155227 |   5 |   787.2 |
-| calc\_marshalled\_size(obj3) |  5.67µs |  151267 |  38 |  6550.6 |
-| calc\_marshalled\_size(obj4) |  2.82µs |  268549 |   0 |     0.0 |
+| expression                   |  median | itr/sec |  MB |   GB/s |
+| :--------------------------- | ------: | ------: | --: | -----: |
+| calc\_marshalled\_size(obj1) | 11.38µs |   87372 | 114 | 9787.1 |
+| calc\_marshalled\_size(obj2) |  6.64µs |  146849 |   5 |  735.1 |
+| calc\_marshalled\_size(obj3) |  7.36µs |  132688 |  38 | 5042.0 |
+| calc\_marshalled\_size(obj4) |  4.38µs |  229417 |   0 |    0.0 |
 
 Maximum possible throughput of serialization
+
+## Minimising memory allocations can increase serialization speed
+
+`marshall_minimize_malloc()` pre-calculates the size of the serialized
+data, and performs only **1** memory allocation.
+
+For small objects, the pre-calculation of size increases overall
+serialization time, but for medium-to-large objects it is often a win.
+
+#### data.frame with 1e4 rows
+
+``` r
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# data.frame with 1e4 rows
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+N <- 1e4; obj1 <- data.frame(x = sample(N), y = runif(N))
+
+res <- bench::mark(
+  marshall(obj1),
+  marshall_minimize_malloc(obj1),
+  check = FALSE
+)
+
+res %>%
+  select(expression, median, `itr/sec`) %>%
+  knitr::kable()
+```
+
+| expression                       | median |  itr/sec |
+| :------------------------------- | -----: | -------: |
+| marshall(obj1)                   | 83.2µs | 11287.57 |
+| marshall\_minimize\_malloc(obj1) | 67.1µs | 13964.31 |
+
+``` r
+
+plot(res) + theme_bw()
+```
+
+<img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />
+
+#### data.frame with 1e6 rows
+
+``` r
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# data.frame with 1e6 rows
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+N <- 1e6; obj2 <- data.frame(x = sample(N), y = runif(N))
+
+res <- bench::mark(
+  marshall(obj2),
+  marshall_minimize_malloc(obj2),
+  check = FALSE
+)
+
+res %>%
+  select(expression, median, `itr/sec`) %>%
+  knitr::kable()
+```
+
+| expression                       |  median |   itr/sec |
+| :------------------------------- | ------: | --------: |
+| marshall(obj2)                   | 10.28ms |  86.59292 |
+| marshall\_minimize\_malloc(obj2) |  2.13ms | 441.35227 |
+
+``` r
+
+plot(res) + theme_bw()
+```
+
+<img src="man/figures/README-unnamed-chunk-4-1.png" width="100%" />
 
 ## Related Software
 

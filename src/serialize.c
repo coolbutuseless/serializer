@@ -11,7 +11,8 @@
 
 
 #include "buffer-dynamic.h"
-
+#include "buffer-static.h"
+#include "calc-size-only.h"
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Serialize an R object
@@ -97,3 +98,43 @@ SEXP unmarshall_(SEXP vec_) {
   return res_;
 }
 
+
+
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Serialize an R object. Precalculate the resulting size so that
+// the number of memory allocations can be minimised
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+SEXP marshall_minimize_malloc_(SEXP robj) {
+
+  // Figure out how much memory is needed
+  int total_size = calc_marshalled_size(robj);
+
+  // Allocate an exact-sized R RAW vector to hold the result
+  SEXP res_ = PROTECT(allocVector(RAWSXP, total_size));
+  dynamic_buffer_t *buf = init_static_buffer(total_size, RAW(res_));
+
+  // Create the output stream structure
+  struct R_outpstream_st output_stream;
+
+  // Initialise the output stream structure
+  R_InitOutPStream(
+    &output_stream,               // The stream object which wraps everything
+    (R_pstream_data_t) buf,       // The actual data
+    R_pstream_binary_format,      // Store as binary
+    3,                            // Version = 3 for R >3.5.0 See `?base::serialize`
+    write_byte_to_static_buffer,  // Function to write single byte to buffer
+    write_bytes_to_static_buffer, // Function for writing multiple bytes to buffer
+    NULL,                         // Func for special handling of reference data.
+    R_NilValue                    // Data related to reference data handling
+  );
+
+  // Serialize the object into the output_stream
+  R_Serialize(robj, &output_stream);
+
+  // Free all the memory
+  free(buf);
+  UNPROTECT(1);
+  return res_;
+}
