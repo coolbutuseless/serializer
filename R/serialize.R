@@ -23,3 +23,16 @@ marshall <- function(robj) {
 unmarshall <- function(raw_vec) {
   .Call(unmarshall_, raw_vec)
 }
+
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#' Calculate the size of the R object when it is serialized
+#'
+#' @param robj R object
+#'
+#' @export
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+calc_marshalled_size <- function(robj) {
+  .Call(calc_marshalled_size_, robj)
+}

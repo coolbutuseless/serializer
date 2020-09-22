@@ -12,6 +12,8 @@ knitr::opts_chunk$set(
   out.width = "100%"
 )
 
+library(dplyr)
+library(lobstr)
 library(serializer)
 ```
 
@@ -62,14 +64,67 @@ remotes::install_github('coolbutuseless/serializer')
 ```{r example}
 library(serializer)
 
-v1 <- serializer::marshall(mtcars)
+v1 <- serializer::marshall(head(mtcars))
 v2 <- base::serialize(mtcars, NULL, xdr = FALSE)
 
 identical(v1, v2)
 
+head(v1, 200)
 
 serializer::unmarshall(v1)
 ```
+
+
+## What's the upper bound on serialization speed?
+
+`calc_marshalled_size()` can be used to calculate the size of a serialized object,
+but does not actually try and create the serialized object.
+
+Because this does not do any memory allocation, or copying of bytes, the speed
+of `calc_marshalled_size()` should give an approximation of the maximum 
+throughput of the serialization process when using R's internal serialization
+mechanism.
+
+The speeds below seem ridiculous, because at its core, serialization is just passing 
+*pointers* + *lengths* to an output stream, and doing very very little actual 
+memory allocation or copying.
+
+
+```{r}
+N <- 1e7
+obj1 <- data.frame(
+  x = sample(N),
+  y = runif(N)
+)
+
+obj2 <- do.call(rbind, replicate(1000, iris, simplify = FALSE))
+
+obj3 <- sample(N)
+
+obj4 <- sample(10)
+
+(n1 <- lobstr::obj_size(obj1))
+(n2 <- lobstr::obj_size(obj2))
+(n3 <- lobstr::obj_size(obj3))
+(n4 <- lobstr::obj_size(obj4))
+
+res <- bench::mark(
+  calc_marshalled_size(obj1),
+  calc_marshalled_size(obj2),
+  calc_marshalled_size(obj3),
+  calc_marshalled_size(obj4),
+  check = FALSE
+)
+
+
+res %>% 
+  mutate(MB = round(c(n1, n2, n3, n4)/1024)) %>%
+  mutate(`GB/s` = round(MB/1024^2 / as.numeric(median), 1)) %>%
+  mutate(`itr/sec` = round(`itr/sec`)) %>%
+  select(expression, median, `itr/sec`, MB, `GB/s`) %>%
+  knitr::kable(caption = "Maximum possible throughput of serialization")
+```
+
 
 
 
