@@ -11,15 +11,15 @@
 #'
 #' @export
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-pack <- function(robj) {
-  .Call(pack_, robj)
+marshall <- function(robj) {
+  .Call(marshall_, robj)
 }
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#' @rdname pack
+#' @rdname marshall
 #' @export
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-unpack <- function(raw_vec) {
-  .Call(unpack_, raw_vec)
+unmarshall <- function(raw_vec) {
+  .Call(unmarshall_, raw_vec)
 }
