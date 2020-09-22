@@ -118,8 +118,8 @@ res <- bench::mark(
 
 
 res %>% 
-  mutate(MB = round(c(n1, n2, n3, n4)/1024)) %>%
-  mutate(`GB/s` = round(MB/1024^2 / as.numeric(median), 1)) %>%
+  mutate(MB = round(c(n1, n2, n3, n4)/1024^2)) %>%
+  mutate(`GB/s` = round(MB/1024 / as.numeric(median), 1)) %>%
   mutate(`itr/sec` = round(`itr/sec`)) %>%
   select(expression, median, `itr/sec`, MB, `GB/s`) %>%
   knitr::kable(caption = "Maximum possible throughput of serialization")

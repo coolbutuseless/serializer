@@ -124,19 +124,19 @@ res <- bench::mark(
 
 
 res %>% 
-  mutate(MB = round(c(n1, n2, n3, n4)/1024)) %>%
-  mutate(`GB/s` = round(MB/1024^2 / as.numeric(median), 1)) %>%
+  mutate(MB = round(c(n1, n2, n3, n4)/1024^2)) %>%
+  mutate(`GB/s` = round(MB/1024 / as.numeric(median), 1)) %>%
   mutate(`itr/sec` = round(`itr/sec`)) %>%
   select(expression, median, `itr/sec`, MB, `GB/s`) %>%
   knitr::kable(caption = "Maximum possible throughput of serialization")
 ```
 
-| expression                   |  median | itr/sec |     MB |   GB/s |
-| :--------------------------- | ------: | ------: | -----: | -----: |
-| calc\_marshalled\_size(obj1) | 11.55µs |   81297 | 117188 | 9676.1 |
-| calc\_marshalled\_size(obj2) |  5.75µs |  154474 |   5275 |  874.4 |
-| calc\_marshalled\_size(obj3) |  5.59µs |  156696 |  39063 | 6658.3 |
-| calc\_marshalled\_size(obj4) |  2.59µs |  294692 |      0 |    0.0 |
+| expression                   |  median | itr/sec |  MB |    GB/s |
+| :--------------------------- | ------: | ------: | --: | ------: |
+| calc\_marshalled\_size(obj1) | 11.08µs |   86847 | 114 | 10050.4 |
+| calc\_marshalled\_size(obj2) |   6.2µs |  155227 |   5 |   787.2 |
+| calc\_marshalled\_size(obj3) |  5.67µs |  151267 |  38 |  6550.6 |
+| calc\_marshalled\_size(obj4) |  2.82µs |  268549 |   0 |     0.0 |
 
 Maximum possible throughput of serialization
 
