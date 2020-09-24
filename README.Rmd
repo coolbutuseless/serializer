@@ -44,9 +44,14 @@ If you want a rock solid version of this package that already exists, use [RApiS
 
 * `marshall()`/`unmarshall()` are direct analogues for `base::serialize()` and 
   `base::unserialize()`
-* `calc_marshalled_size()` calculates the exact size of the serialized
-  representation of an object.
-* `marshall_minimize_malloc()` is a modified version of `marshall()` which 
+* `calc_size_robust()` calculates the exact size of the serialized
+  representation of an object using R's seriazliation infrastructure but not
+  actually allocating any bytes.
+* `calc_size_fast()` a bespoke calculation of the exact size of the serialized
+  representation.  This does *not* use R's internals, and does not deal with 
+  100% of all possible objects - e.g. some less common language/compilation 
+  objects.
+* `marshall_fast()` is a modified version of `marshall()` which 
   minimises memory allocations by pre-calculating the final size of the 
   serialized representation.  It speeds up the serialization process for
   larger objects.
@@ -86,7 +91,7 @@ dat <- head(mtcars, 3)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Calculate exactly how many bytes this will take once serialized
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-serializer::calc_marshalled_size(dat)
+serializer::calc_size_robust(dat)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Serialized results from this package and base::serialize should be identical
@@ -110,11 +115,11 @@ serializer::unmarshall(v1)
 
 ## What's the upper bound on serialization speed?
 
-`calc_marshalled_size()` can be used to calculate the size of a serialized object,
+`calc_size_robust()` can be used to calculate the size of a serialized object,
 but does not actually try and create the serialized object.
 
 Because this does not do any memory allocation, or copying of bytes, the speed
-of `calc_marshalled_size()` should give an approximation of the maximum 
+of `calc_size_robust()` should give an approximation of the maximum 
 throughput of the serialization process when using R's internal serialization
 mechanism.
 
@@ -146,10 +151,10 @@ obj4 <- sample(10)
 # go through seritalization process, but only count the bytes
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 res <- bench::mark(
-  calc_marshalled_size(obj1),
-  calc_marshalled_size(obj2),
-  calc_marshalled_size(obj3),
-  calc_marshalled_size(obj4),
+  calc_size_robust(obj1),
+  calc_size_robust(obj2),
+  calc_size_robust(obj3),
+  calc_size_robust(obj4),
   check = FALSE
 )
 
@@ -168,8 +173,8 @@ res %>%
 
 ## Minimising memory allocations can increase serialization speed
 
-`marshall_minimize_malloc()` pre-calculates the size of the serialized data,
-and performs only **1** memory allocation.
+`marshall_fast()` pre-calculates the size of the serialized data,
+and performs only **1** memory allocation (exclusing whatever R is doing internally).
 
 For small objects, the pre-calculation of size increases overall serialization time,
 but for medium-to-large objects it is often a win.
@@ -183,9 +188,11 @@ but for medium-to-large objects it is often a win.
 N <- 1e4; obj1 <- data.frame(x = sample(N), y = runif(N))
 
 res <- bench::mark(
+  serialize(obj1, NULL, xdr = FALSE),
   marshall(obj1),
-  marshall_minimize_malloc(obj1),
-  check = FALSE
+  marshall_fast(obj1),
+  marshall_fast(obj1, fast = TRUE),
+  check = TRUE
 )
 
 res %>%
@@ -205,9 +212,35 @@ plot(res) + theme_bw()
 N <- 1e6; obj2 <- data.frame(x = sample(N), y = runif(N))
 
 res <- bench::mark(
+  serialize(obj2, NULL, xdr = FALSE),
   marshall(obj2),
-  marshall_minimize_malloc(obj2),
-  check = FALSE
+  marshall_fast(obj2),
+  marshall_fast(obj2, fast = TRUE),
+  check = TRUE
+)
+
+res %>%
+  select(expression, median, `itr/sec`) %>%
+  knitr::kable()
+
+plot(res) + theme_bw()
+```
+
+
+#### data.frame with 1e6 rows
+
+```{r}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# data.frame with 1e6 rows
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+obj2 <- do.call(rbind, replicate(1000, mtcars, simplify = FALSE))
+
+res <- bench::mark(
+  serialize(obj2, NULL, xdr = FALSE),
+  marshall(obj2),
+  marshall_fast(obj2),
+  marshall_fast(obj2, fast = TRUE),
+  check = TRUE
 )
 
 res %>%

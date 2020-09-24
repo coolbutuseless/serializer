@@ -1,3 +1,10 @@
+# serializer 0.1.4   2020-09-24
+
+* Rename: `calc_marshalled_size()` -> `calc_size_robust()`
+* Rename: `marshall_minimize_malloc()` -> `marshall_fast()`
+* Feature: `calc_size_fast()` a faster (but less robust) version of 
+  `calc_size_robust()`
+
 # serializer 0.1.3   2020-09-22
 
 * Features: `marshall_minimize_malloc()` pre-calculates the resulting size of 

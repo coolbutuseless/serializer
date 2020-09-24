@@ -29,11 +29,16 @@ use
 
   - `marshall()`/`unmarshall()` are direct analogues for
     `base::serialize()` and `base::unserialize()`
-  - `calc_marshalled_size()` calculates the exact size of the serialized
-    representation of an object.
-  - `marshall_minimize_malloc()` is a modified version of `marshall()`
-    which minimises memory allocations by pre-calculating the final size
-    of the serialized representation. It speeds up the serialization
+  - `calc_size_robust()` calculates the exact size of the serialized
+    representation of an object using R’s seriazliation infrastructure
+    but not actually allocating any bytes.
+  - `calc_size_fast()` a bespoke calculation of the exact size of the
+    serialized representation. This does *not* use R’s internals, and
+    does not deal with 100% of all possible objects - e.g. some less
+    common language/compilation objects.
+  - `marshall_fast()` is a modified version of `marshall()` which
+    minimises memory allocations by pre-calculating the final size of
+    the serialized representation. It speeds up the serialization
     process for larger objects.
 
 ## Installation
@@ -70,7 +75,7 @@ dat <- head(mtcars, 3)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Calculate exactly how many bytes this will take once serialized
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-serializer::calc_marshalled_size(dat)
+serializer::calc_size_robust(dat)
 #> [1] 674
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -108,12 +113,11 @@ serializer::unmarshall(v1)
 
 ## What’s the upper bound on serialization speed?
 
-`calc_marshalled_size()` can be used to calculate the size of a
-serialized object, but does not actually try and create the serialized
-object.
+`calc_size_robust()` can be used to calculate the size of a serialized
+object, but does not actually try and create the serialized object.
 
 Because this does not do any memory allocation, or copying of bytes, the
-speed of `calc_marshalled_size()` should give an approximation of the
+speed of `calc_size_robust()` should give an approximation of the
 maximum throughput of the serialization process when using R’s internal
 serialization mechanism.
 
@@ -148,10 +152,10 @@ obj4 <- sample(10)
 # go through seritalization process, but only count the bytes
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 res <- bench::mark(
-  calc_marshalled_size(obj1),
-  calc_marshalled_size(obj2),
-  calc_marshalled_size(obj3),
-  calc_marshalled_size(obj4),
+  calc_size_robust(obj1),
+  calc_size_robust(obj2),
+  calc_size_robust(obj3),
+  calc_size_robust(obj4),
   check = FALSE
 )
 
@@ -167,19 +171,20 @@ res %>%
   knitr::kable(caption = "Maximum possible throughput of serialization")
 ```
 
-| expression                   |  median | itr/sec |  MB |   GB/s |
-| :--------------------------- | ------: | ------: | --: | -----: |
-| calc\_marshalled\_size(obj1) | 11.55µs |   84881 | 114 | 9641.3 |
-| calc\_marshalled\_size(obj2) |  6.66µs |  146996 |   5 |  733.0 |
-| calc\_marshalled\_size(obj3) |  7.66µs |  127831 |  38 | 4846.5 |
-| calc\_marshalled\_size(obj4) |  3.22µs |  251210 |   0 |    0.0 |
+| expression               |  median | itr/sec |  MB |   GB/s |
+| :----------------------- | ------: | ------: | --: | -----: |
+| calc\_size\_robust(obj1) | 11.22µs |   84772 | 114 | 9920.5 |
+| calc\_size\_robust(obj2) |  6.36µs |  152199 |   5 |  768.0 |
+| calc\_size\_robust(obj3) |  5.73µs |  147488 |  38 | 6476.3 |
+| calc\_size\_robust(obj4) |   2.7µs |  266598 |   0 |    0.0 |
 
 Maximum possible throughput of serialization
 
 ## Minimising memory allocations can increase serialization speed
 
-`marshall_minimize_malloc()` pre-calculates the size of the serialized
-data, and performs only **1** memory allocation.
+`marshall_fast()` pre-calculates the size of the serialized data, and
+performs only **1** memory allocation (exclusing whatever R is doing
+internally).
 
 For small objects, the pre-calculation of size increases overall
 serialization time, but for medium-to-large objects it is often a win.
@@ -193,9 +198,11 @@ serialization time, but for medium-to-large objects it is often a win.
 N <- 1e4; obj1 <- data.frame(x = sample(N), y = runif(N))
 
 res <- bench::mark(
+  serialize(obj1, NULL, xdr = FALSE),
   marshall(obj1),
-  marshall_minimize_malloc(obj1),
-  check = FALSE
+  marshall_fast(obj1),
+  marshall_fast(obj1, fast = TRUE),
+  check = TRUE
 )
 
 res %>%
@@ -203,10 +210,12 @@ res %>%
   knitr::kable()
 ```
 
-| expression                       | median |  itr/sec |
-| :------------------------------- | -----: | -------: |
-| marshall(obj1)                   | 85.9µs | 10960.12 |
-| marshall\_minimize\_malloc(obj1) | 69.6µs | 13612.89 |
+| expression                         | median |  itr/sec |
+| :--------------------------------- | -----: | -------: |
+| serialize(obj1, NULL, xdr = FALSE) | 86.3µs | 10830.04 |
+| marshall(obj1)                     | 85.2µs | 11088.24 |
+| marshall\_fast(obj1)               |   70µs | 13367.15 |
+| marshall\_fast(obj1, fast = TRUE)  | 66.9µs | 14144.99 |
 
 ``` r
 
@@ -224,9 +233,11 @@ plot(res) + theme_bw()
 N <- 1e6; obj2 <- data.frame(x = sample(N), y = runif(N))
 
 res <- bench::mark(
+  serialize(obj2, NULL, xdr = FALSE),
   marshall(obj2),
-  marshall_minimize_malloc(obj2),
-  check = FALSE
+  marshall_fast(obj2),
+  marshall_fast(obj2, fast = TRUE),
+  check = TRUE
 )
 
 res %>%
@@ -234,10 +245,12 @@ res %>%
   knitr::kable()
 ```
 
-| expression                       | median |   itr/sec |
-| :------------------------------- | -----: | --------: |
-| marshall(obj2)                   | 9.79ms |  91.68964 |
-| marshall\_minimize\_malloc(obj2) | 2.29ms | 379.68270 |
+| expression                         |  median |   itr/sec |
+| :--------------------------------- | ------: | --------: |
+| serialize(obj2, NULL, xdr = FALSE) | 11.57ms |  78.82972 |
+| marshall(obj2)                     | 13.51ms |  72.36631 |
+| marshall\_fast(obj2)               |  2.22ms | 406.65879 |
+| marshall\_fast(obj2, fast = TRUE)  |  2.32ms | 393.54028 |
 
 ``` r
 
@@ -245,6 +258,41 @@ plot(res) + theme_bw()
 ```
 
 <img src="man/figures/README-unnamed-chunk-4-1.png" width="100%" />
+
+#### data.frame with 1e6 rows
+
+``` r
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# data.frame with 1e6 rows
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+obj2 <- do.call(rbind, replicate(1000, mtcars, simplify = FALSE))
+
+res <- bench::mark(
+  serialize(obj2, NULL, xdr = FALSE),
+  marshall(obj2),
+  marshall_fast(obj2),
+  marshall_fast(obj2, fast = TRUE),
+  check = TRUE
+)
+
+res %>%
+  select(expression, median, `itr/sec`) %>%
+  knitr::kable()
+```
+
+| expression                         | median |  itr/sec |
+| :--------------------------------- | -----: | -------: |
+| serialize(obj2, NULL, xdr = FALSE) | 4.39ms | 212.6027 |
+| marshall(obj2)                     |  4.4ms | 217.1872 |
+| marshall\_fast(obj2)               | 4.67ms | 222.6453 |
+| marshall\_fast(obj2, fast = TRUE)  | 3.51ms | 291.4762 |
+
+``` r
+
+plot(res) + theme_bw()
+```
+
+<img src="man/figures/README-unnamed-chunk-5-1.png" width="100%" />
 
 ## Related Software
 
