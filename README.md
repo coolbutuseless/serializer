@@ -27,16 +27,16 @@ use
 
 ## What’s in the box
 
-  - `marshall()`/`unmarshall()` are direct analogues for
+-   `marshall()`/`unmarshall()` are direct analogues for
     `base::serialize()` and `base::unserialize()`
-  - `calc_size_robust()` calculates the exact size of the serialized
+-   `calc_size_robust()` calculates the exact size of the serialized
     representation of an object using R’s seriazliation infrastructure
     but not actually allocating any bytes.
-  - `calc_size_fast()` a bespoke calculation of the exact size of the
+-   `calc_size_fast()` a bespoke calculation of the exact size of the
     serialized representation. This does *not* use R’s internals, and
     does not deal with 100% of all possible objects - e.g. some less
     common language/compilation objects.
-  - `marshall_fast()` is a modified version of `marshall()` which
+-   `marshall_fast()` is a modified version of `marshall()` which
     minimises memory allocations by pre-calculating the final size of
     the serialized representation. It speeds up the serialization
     process for larger objects.
@@ -53,14 +53,14 @@ remotes::install_github('coolbutuseless/serializer')
 
 ## Notes
 
-  - Using R’s serialization infrastructure from C involves 2 main parts:
-      - a buffer (which could be memory, a file, a pipe, etc) with
+-   Using R’s serialization infrastructure from C involves 2 main parts:
+    -   a buffer (which could be memory, a file, a pipe, etc) with
         accompanying functions for reading and writing bytes to/from the
         buffer
-      - input/output stream wrappers around this buffer initialised and
+    -   input/output stream wrappers around this buffer initialised and
         created using R internals
-          - Input stream: `R_inpstream_st`, `R_InitInPStream()`
-          - Output stream: `R_outpstream_st`, `R_InitOutPStream()`
+        -   Input stream: `R_inpstream_st`, `R_InitInPStream()`
+        -   Output stream: `R_outpstream_st`, `R_InitOutPStream()`
 
 ## Example
 
@@ -92,7 +92,7 @@ identical(v1, v2)
 length(v1)
 #> [1] 674
 head(v1, 200)
-#>   [1] 42 0a 03 00 00 00 02 00 04 00 00 05 03 00 05 00 00 00 55 54 46 2d 38 13 03
+#>   [1] 42 0a 03 00 00 00 04 00 04 00 00 05 03 00 05 00 00 00 55 54 46 2d 38 13 03
 #>  [26] 00 00 0b 00 00 00 0e 00 00 00 03 00 00 00 00 00 00 00 00 00 35 40 00 00 00
 #>  [51] 00 00 00 35 40 cd cc cc cc cc cc 36 40 0e 00 00 00 03 00 00 00 00 00 00 00
 #>  [76] 00 00 18 40 00 00 00 00 00 00 18 40 00 00 00 00 00 00 10 40 0e 00 00 00 03
@@ -126,7 +126,6 @@ just passing *pointers* + *lengths* to an output stream, and doing very
 very little actual memory allocation or copying.
 
 ``` r
-
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Test objects
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -172,11 +171,11 @@ res %>%
 ```
 
 | expression               |  median | itr/sec |  MB |   GB/s |
-| :----------------------- | ------: | ------: | --: | -----: |
-| calc\_size\_robust(obj1) | 11.22µs |   84772 | 114 | 9920.5 |
-| calc\_size\_robust(obj2) |  6.36µs |  152199 |   5 |  768.0 |
-| calc\_size\_robust(obj3) |  5.73µs |  147488 |  38 | 6476.3 |
-| calc\_size\_robust(obj4) |   2.7µs |  266598 |   0 |    0.0 |
+|:-------------------------|--------:|--------:|----:|-------:|
+| calc\_size\_robust(obj1) | 11.34µs |   86362 | 114 | 9818.2 |
+| calc\_size\_robust(obj2) |  6.63µs |  146837 |   5 |  735.9 |
+| calc\_size\_robust(obj3) |  7.55µs |  128345 |  38 | 4917.8 |
+| calc\_size\_robust(obj4) |  4.25µs |  243749 |   0 |    0.0 |
 
 Maximum possible throughput of serialization
 
@@ -211,14 +210,13 @@ res %>%
 ```
 
 | expression                         | median |  itr/sec |
-| :--------------------------------- | -----: | -------: |
-| serialize(obj1, NULL, xdr = FALSE) | 86.3µs | 10830.04 |
-| marshall(obj1)                     | 85.2µs | 11088.24 |
-| marshall\_fast(obj1)               |   70µs | 13367.15 |
-| marshall\_fast(obj1, fast = TRUE)  | 66.9µs | 14144.99 |
+|:-----------------------------------|-------:|---------:|
+| serialize(obj1, NULL, xdr = FALSE) | 83.4µs | 11225.06 |
+| marshall(obj1)                     | 83.6µs | 11314.54 |
+| marshall\_fast(obj1)               | 67.5µs | 14104.79 |
+| marshall\_fast(obj1, fast = TRUE)  | 65.9µs | 14223.46 |
 
 ``` r
-
 plot(res) + theme_bw()
 ```
 
@@ -246,14 +244,13 @@ res %>%
 ```
 
 | expression                         |  median |   itr/sec |
-| :--------------------------------- | ------: | --------: |
-| serialize(obj2, NULL, xdr = FALSE) | 11.57ms |  78.82972 |
-| marshall(obj2)                     | 13.51ms |  72.36631 |
-| marshall\_fast(obj2)               |  2.22ms | 406.65879 |
-| marshall\_fast(obj2, fast = TRUE)  |  2.32ms | 393.54028 |
+|:-----------------------------------|--------:|----------:|
+| serialize(obj2, NULL, xdr = FALSE) | 14.26ms |  63.47105 |
+| marshall(obj2)                     | 10.23ms |  89.25752 |
+| marshall\_fast(obj2)               |  2.18ms | 299.09430 |
+| marshall\_fast(obj2, fast = TRUE)  |  2.27ms | 255.40400 |
 
 ``` r
-
 plot(res) + theme_bw()
 ```
 
@@ -263,7 +260,7 @@ plot(res) + theme_bw()
 
 ``` r
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# data.frame with 1e6 rows
+# data.frame with 32000 rows
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 obj2 <- do.call(rbind, replicate(1000, mtcars, simplify = FALSE))
 
@@ -281,14 +278,13 @@ res %>%
 ```
 
 | expression                         | median |  itr/sec |
-| :--------------------------------- | -----: | -------: |
-| serialize(obj2, NULL, xdr = FALSE) | 4.39ms | 212.6027 |
-| marshall(obj2)                     |  4.4ms | 217.1872 |
-| marshall\_fast(obj2)               | 4.67ms | 222.6453 |
-| marshall\_fast(obj2, fast = TRUE)  | 3.51ms | 291.4762 |
+|:-----------------------------------|-------:|---------:|
+| serialize(obj2, NULL, xdr = FALSE) | 4.74ms | 199.2223 |
+| marshall(obj2)                     | 4.45ms | 203.2792 |
+| marshall\_fast(obj2)               | 4.69ms | 211.3990 |
+| marshall\_fast(obj2, fast = TRUE)  | 3.61ms | 280.5693 |
 
 ``` r
-
 plot(res) + theme_bw()
 ```
 
@@ -296,12 +292,12 @@ plot(res) + theme_bw()
 
 ## Related Software
 
-  - [RApiSerialize](https://cran.r-project.org/web/packages/RApiSerialize/index.html)
-  - [qs](https://cran.r-project.org/web/packages/qs/index.html)
-  - [fst](https://cran.r-project.org/web/packages/fst/index.html)
+-   [RApiSerialize](https://cran.r-project.org/web/packages/RApiSerialize/index.html)
+-   [qs](https://cran.r-project.org/web/packages/qs/index.html)
+-   [fst](https://cran.r-project.org/web/packages/fst/index.html)
 
 ## Acknowledgements
 
-  - R Core for developing and maintaining the language.
-  - CRAN maintainers, for patiently shepherding packages onto CRAN and
+-   R Core for developing and maintaining the language.
+-   CRAN maintainers, for patiently shepherding packages onto CRAN and
     maintaining the repository

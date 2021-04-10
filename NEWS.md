@@ -1,3 +1,7 @@
+# serializer 0.1.5   2021-04-11
+
+* More orthogonality in the dynamic and static buffer techniques
+
 # serializer 0.1.4   2020-09-24
 
 * Rename: `calc_marshalled_size()` -> `calc_size_robust()`

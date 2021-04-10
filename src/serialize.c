@@ -70,7 +70,7 @@ SEXP unmarshall_(SEXP vec_) {
   R_xlen_t len = XLENGTH(vec_);
 
   // Create a buffer object which points to the raw data
-  dynamic_buffer_t *buf = malloc(sizeof(dynamic_buffer_t));
+  static_buffer_t *buf = malloc(sizeof(static_buffer_t));
   if (buf == NULL) {
     error("'buf' malloc failed!");
   }
@@ -82,13 +82,13 @@ SEXP unmarshall_(SEXP vec_) {
   struct R_inpstream_st input_stream;
 
   R_InitInPStream(
-    &input_stream,           // Stream object wrapping data buffer
-    (R_pstream_data_t) buf,  // Actual data buffer
-    R_pstream_any_format,    // Unpack all serialized types
-    read_byte,               // Function to read single byte from buffer
-    read_bytes,              // Function for reading multiple bytes from buffer
-    NULL,                    // Func for special handling of reference data.
-    NULL                     // Data related to reference data handling
+    &input_stream,                 // Stream object wrapping data buffer
+    (R_pstream_data_t) buf,        // Actual data buffer
+    R_pstream_any_format,          // Unpack all serialized types
+    read_byte_from_static_buffer,  // Function to read single byte from buffer
+    read_bytes_from_static_buffer, // Function for reading multiple bytes from buffer
+    NULL,                          // Func for special handling of reference data.
+    NULL                           // Data related to reference data handling
   );
 
   // Unserialize the input_stream into an R object
@@ -119,7 +119,7 @@ SEXP marshall_fast_(SEXP robj, SEXP fast_) {
 
   // Allocate an exact-sized R RAW vector to hold the result
   SEXP res_ = PROTECT(allocVector(RAWSXP, total_size));
-  dynamic_buffer_t *buf = init_static_buffer(total_size, RAW(res_));
+  static_buffer_t *buf = init_static_buffer(total_size, RAW(res_));
 
   // Create the output stream structure
   struct R_outpstream_st output_stream;

@@ -9,14 +9,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "buffer-dynamic.h"
+#include "buffer-static.h"
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Initialise an empty buffer to hold 'nbytes'
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-dynamic_buffer_t *init_static_buffer(int nbytes, unsigned char *data) {
-  dynamic_buffer_t *buf = (dynamic_buffer_t *)malloc(sizeof(dynamic_buffer_t));
+static_buffer_t *init_static_buffer(int nbytes, unsigned char *data) {
+  static_buffer_t *buf = (static_buffer_t *)malloc(sizeof(static_buffer_t));
   if (buf == NULL) {
     error("init_buffer(): cannot malloc buffer");
   }
@@ -38,7 +38,7 @@ dynamic_buffer_t *init_static_buffer(int nbytes, unsigned char *data) {
 // have to extract it first
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void write_byte_to_static_buffer(R_outpstream_t stream, int c) {
-  dynamic_buffer_t *buf = (dynamic_buffer_t *)stream->data;
+  static_buffer_t *buf = (static_buffer_t *)stream->data;
 
   // Expand the buffer if it's out space
   while (buf->pos >= buf->length) {
@@ -56,7 +56,7 @@ void write_byte_to_static_buffer(R_outpstream_t stream, int c) {
 // have to extract it first
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void write_bytes_to_static_buffer(R_outpstream_t stream, void *src, int length) {
-  dynamic_buffer_t *buf = (dynamic_buffer_t *)stream->data;
+  static_buffer_t *buf = (static_buffer_t *)stream->data;
 
   // Expand the buffer if it's out space
   while (buf->pos + length > buf->length) {
@@ -69,3 +69,32 @@ void write_bytes_to_static_buffer(R_outpstream_t stream, void *src, int length) 
 }
 
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Read a byte from the serialized stream
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+int read_byte_from_static_buffer(R_inpstream_t stream) {
+  static_buffer_t *buf = (static_buffer_t *)stream->data;
+
+  if (buf->pos >= buf->length) {
+    error("read_byte(): overflow");
+  }
+
+  return buf->data[buf->pos++];
+}
+
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Read multiple bytes from the serialized stream
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void read_bytes_from_static_buffer(R_inpstream_t stream, void *dst, int length) {
+  static_buffer_t *buf = (static_buffer_t *)stream->data;
+
+  if (buf->pos + length > buf->length) {
+    error("read_bytes(): overflow");
+  }
+
+  memcpy(dst, buf->data + buf->pos, length);
+
+  buf->pos += length;
+}

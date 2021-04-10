@@ -231,7 +231,7 @@ plot(res) + theme_bw()
 
 ```{r}
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# data.frame with 1e6 rows
+# data.frame with 32000 rows
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 obj2 <- do.call(rbind, replicate(1000, mtcars, simplify = FALSE))
 
