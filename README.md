@@ -5,10 +5,8 @@
 
 <!-- badges: start -->
 
-![](https://img.shields.io/badge/cool-useless-green.svg) [![Lifecycle:
-experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
-[![R build
-status](https://github.com/coolbutuseless/serializer/workflows/R-CMD-check/badge.svg)](https://github.com/coolbutuseless/serializer/actions)
+![](https://img.shields.io/badge/cool-useless-green.svg)
+[![R-CMD-check](https://github.com/coolbutuseless/serializer/workflows/R-CMD-check/badge.svg)](https://github.com/coolbutuseless/serializer/actions)
 <!-- badges: end -->
 
 `serializer` is a package which demonstrates how to use R’s internal
@@ -29,13 +27,9 @@ use
 
 -   `marshall()`/`unmarshall()` are direct analogues for
     `base::serialize()` and `base::unserialize()`
--   `calc_size_robust()` calculates the exact size of the serialized
+-   `calc_size()` calculates the exact size of the serialized
     representation of an object using R’s seriazliation infrastructure
     but not actually allocating any bytes.
--   `calc_size_fast()` a bespoke calculation of the exact size of the
-    serialized representation. This does *not* use R’s internals, and
-    does not deal with 100% of all possible objects - e.g. some less
-    common language/compilation objects.
 -   `marshall_fast()` is a modified version of `marshall()` which
     minimises memory allocations by pre-calculating the final size of
     the serialized representation. It speeds up the serialization
@@ -75,7 +69,7 @@ dat <- head(mtcars, 3)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Calculate exactly how many bytes this will take once serialized
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-serializer::calc_size_robust(dat)
+serializer::calc_size(dat)
 #> [1] 674
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -92,7 +86,7 @@ identical(v1, v2)
 length(v1)
 #> [1] 674
 head(v1, 200)
-#>   [1] 42 0a 03 00 00 00 04 00 04 00 00 05 03 00 05 00 00 00 55 54 46 2d 38 13 03
+#>   [1] 42 0a 03 00 00 00 01 01 04 00 00 05 03 00 05 00 00 00 55 54 46 2d 38 13 03
 #>  [26] 00 00 0b 00 00 00 0e 00 00 00 03 00 00 00 00 00 00 00 00 00 35 40 00 00 00
 #>  [51] 00 00 00 35 40 cd cc cc cc cc cc 36 40 0e 00 00 00 03 00 00 00 00 00 00 00
 #>  [76] 00 00 18 40 00 00 00 00 00 00 18 40 00 00 00 00 00 00 10 40 0e 00 00 00 03
@@ -113,12 +107,12 @@ serializer::unmarshall(v1)
 
 ## What’s the upper bound on serialization speed?
 
-`calc_size_robust()` can be used to calculate the size of a serialized
-object, but does not actually try and create the serialized object.
+`calc_size()` can be used to calculate the size of a serialized object,
+but does not actually try and create the serialized object.
 
 Because this does not do any memory allocation, or copying of bytes, the
-speed of `calc_size_robust()` should give an approximation of the
-maximum throughput of the serialization process when using R’s internal
+speed of `calc_size()` should give an approximation of the maximum
+throughput of the serialization process when using R’s internal
 serialization mechanism.
 
 The speeds below seem ridiculous, because at its core, serialization is
@@ -151,10 +145,10 @@ obj4 <- sample(10)
 # go through seritalization process, but only count the bytes
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 res <- bench::mark(
-  calc_size_robust(obj1),
-  calc_size_robust(obj2),
-  calc_size_robust(obj3),
-  calc_size_robust(obj4),
+  calc_size(obj1),
+  calc_size(obj2),
+  calc_size(obj3),
+  calc_size(obj4),
   check = FALSE
 )
 
@@ -170,12 +164,12 @@ res %>%
   knitr::kable(caption = "Maximum possible throughput of serialization")
 ```
 
-| expression               |  median | itr/sec |  MB |   GB/s |
-|:-------------------------|--------:|--------:|----:|-------:|
-| calc\_size\_robust(obj1) | 11.34µs |   86362 | 114 | 9818.2 |
-| calc\_size\_robust(obj2) |  6.63µs |  146837 |   5 |  735.9 |
-| calc\_size\_robust(obj3) |  7.55µs |  128345 |  38 | 4917.8 |
-| calc\_size\_robust(obj4) |  4.25µs |  243749 |   0 |    0.0 |
+| expression       |  median | itr/sec |  MB |   GB/s |
+|:-----------------|--------:|--------:|----:|-------:|
+| calc\_size(obj1) | 13.16µs |   68457 | 114 | 8460.9 |
+| calc\_size(obj2) |  7.55µs |  109609 |   5 |  646.4 |
+| calc\_size(obj3) |  8.11µs |  106508 |  38 | 4575.8 |
+| calc\_size(obj4) |  3.16µs |  208325 |   0 |    0.0 |
 
 Maximum possible throughput of serialization
 
@@ -200,7 +194,6 @@ res <- bench::mark(
   serialize(obj1, NULL, xdr = FALSE),
   marshall(obj1),
   marshall_fast(obj1),
-  marshall_fast(obj1, fast = TRUE),
   check = TRUE
 )
 
@@ -209,12 +202,11 @@ res %>%
   knitr::kable()
 ```
 
-| expression                         | median |  itr/sec |
-|:-----------------------------------|-------:|---------:|
-| serialize(obj1, NULL, xdr = FALSE) | 83.4µs | 11225.06 |
-| marshall(obj1)                     | 83.6µs | 11314.54 |
-| marshall\_fast(obj1)               | 67.5µs | 14104.79 |
-| marshall\_fast(obj1, fast = TRUE)  | 65.9µs | 14223.46 |
+| expression                         |  median |   itr/sec |
+|:-----------------------------------|--------:|----------:|
+| serialize(obj1, NULL, xdr = FALSE) | 101.4µs |  7954.528 |
+| marshall(obj1)                     |  97.9µs |  8668.037 |
+| marshall\_fast(obj1)               |  78.6µs | 10969.937 |
 
 ``` r
 plot(res) + theme_bw()
@@ -234,7 +226,6 @@ res <- bench::mark(
   serialize(obj2, NULL, xdr = FALSE),
   marshall(obj2),
   marshall_fast(obj2),
-  marshall_fast(obj2, fast = TRUE),
   check = TRUE
 )
 
@@ -245,10 +236,9 @@ res %>%
 
 | expression                         |  median |   itr/sec |
 |:-----------------------------------|--------:|----------:|
-| serialize(obj2, NULL, xdr = FALSE) | 14.26ms |  63.47105 |
-| marshall(obj2)                     | 10.23ms |  89.25752 |
-| marshall\_fast(obj2)               |  2.18ms | 299.09430 |
-| marshall\_fast(obj2, fast = TRUE)  |  2.27ms | 255.40400 |
+| serialize(obj2, NULL, xdr = FALSE) | 27.32ms |  38.28919 |
+| marshall(obj2)                     | 19.25ms |  50.72448 |
+| marshall\_fast(obj2)               |  2.45ms | 251.84064 |
 
 ``` r
 plot(res) + theme_bw()
@@ -268,7 +258,6 @@ res <- bench::mark(
   serialize(obj2, NULL, xdr = FALSE),
   marshall(obj2),
   marshall_fast(obj2),
-  marshall_fast(obj2, fast = TRUE),
   check = TRUE
 )
 
@@ -279,10 +268,9 @@ res %>%
 
 | expression                         | median |  itr/sec |
 |:-----------------------------------|-------:|---------:|
-| serialize(obj2, NULL, xdr = FALSE) | 4.74ms | 199.2223 |
-| marshall(obj2)                     | 4.45ms | 203.2792 |
-| marshall\_fast(obj2)               | 4.69ms | 211.3990 |
-| marshall\_fast(obj2, fast = TRUE)  | 3.61ms | 280.5693 |
+| serialize(obj2, NULL, xdr = FALSE) |  5.1ms | 174.9605 |
+| marshall(obj2)                     | 4.81ms | 184.8033 |
+| marshall\_fast(obj2)               |  5.8ms | 162.8915 |
 
 ``` r
 plot(res) + theme_bw()

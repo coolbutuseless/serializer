@@ -4,12 +4,10 @@
 \alias{marshall_fast}
 \title{Serialize an R object to a raw vector, while minimising memory allocations}
 \usage{
-marshall_fast(robj, fast = FALSE)
+marshall_fast(robj)
 }
 \arguments{
 \item{robj}{R object}
-
-\item{fast}{use fast method for pre-calculation of size.}
 }
 \description{
 This is a slightly more complex version of \code{marshall()} which

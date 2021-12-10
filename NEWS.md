@@ -1,3 +1,9 @@
+
+# serializer 0.1.6   2021-12-11
+
+* Remove `calc_size_fast()` as it's just a little too hacky.
+* Rename `calc_size_robust()` to `calc_size()`
+
 # serializer 0.1.5   2021-04-11
 
 * More orthogonality in the dynamic and static buffer techniques

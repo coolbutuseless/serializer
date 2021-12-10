@@ -34,12 +34,11 @@ unmarshall <- function(raw_vec) {
 #' and gives a speed boost for medium-to-large objects
 #'
 #' @param robj R object
-#' @param fast use fast method for pre-calculation of size.
 #'
 #' @export
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-marshall_fast <- function(robj, fast = FALSE) {
-  .Call(marshall_fast_, robj, fast)
+marshall_fast <- function(robj) {
+  .Call(marshall_fast_, robj)
 }
 
 
@@ -54,24 +53,7 @@ marshall_fast <- function(robj, fast = FALSE) {
 #'
 #' @export
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-calc_size_robust <- function(robj) {
+calc_size <- function(robj) {
   .Call(calc_size_robust_, robj)
 }
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#' Calculate the approximate size of the R object when it is serialized
-#'
-#' This function returns a size which is greater-than-or-equal-to that returned by
-#' \code{calc_size_robust}.
-#'
-#' This function is faster than \code{calc_size_robust()} but has little support
-#' for language and function objects.  If unsupported language objects are found
-#' then this function will return a negative value.
-#'
-#' @param robj R object
-#'
-#' @export
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-calc_size_fast <- function(robj) {
-  .Call(calc_size_fast_, robj)
-}

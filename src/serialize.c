@@ -13,7 +13,6 @@
 #include "buffer-dynamic.h"
 #include "buffer-static.h"
 #include "calc-size-robust.h"
-#include "calc-size-fast.h"
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Serialize an R object
@@ -107,15 +106,11 @@ SEXP unmarshall_(SEXP vec_) {
 // Serialize an R object. Precalculate the resulting size so that
 // the number of memory allocations can be minimised
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SEXP marshall_fast_(SEXP robj, SEXP fast_) {
+SEXP marshall_fast_(SEXP robj) {
 
   // Figure out how much memory is needed
   int total_size;
-  if (asLogical(fast_)) {
-    total_size = calc_size_fast_outer(robj);
-  } else {
-    total_size = calc_size_robust(robj);
-  }
+  total_size = calc_size_robust(robj);
 
   // Allocate an exact-sized R RAW vector to hold the result
   SEXP res_ = PROTECT(allocVector(RAWSXP, total_size));

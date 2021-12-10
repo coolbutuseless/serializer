@@ -24,8 +24,7 @@ library(serializer)
 
 <!-- badges: start -->
 ![](https://img.shields.io/badge/cool-useless-green.svg)
-[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
-[![R build status](https://github.com/coolbutuseless/serializer/workflows/R-CMD-check/badge.svg)](https://github.com/coolbutuseless/serializer/actions)
+[![R-CMD-check](https://github.com/coolbutuseless/serializer/workflows/R-CMD-check/badge.svg)](https://github.com/coolbutuseless/serializer/actions)
 <!-- badges: end -->
 
 `serializer` is a package which demonstrates how to use R's internal 
@@ -44,13 +43,9 @@ If you want a rock solid version of this package that already exists, use [RApiS
 
 * `marshall()`/`unmarshall()` are direct analogues for `base::serialize()` and 
   `base::unserialize()`
-* `calc_size_robust()` calculates the exact size of the serialized
+* `calc_size()` calculates the exact size of the serialized
   representation of an object using R's seriazliation infrastructure but not
   actually allocating any bytes.
-* `calc_size_fast()` a bespoke calculation of the exact size of the serialized
-  representation.  This does *not* use R's internals, and does not deal with 
-  100% of all possible objects - e.g. some less common language/compilation 
-  objects.
 * `marshall_fast()` is a modified version of `marshall()` which 
   minimises memory allocations by pre-calculating the final size of the 
   serialized representation.  It speeds up the serialization process for
@@ -91,7 +86,7 @@ dat <- head(mtcars, 3)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Calculate exactly how many bytes this will take once serialized
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-serializer::calc_size_robust(dat)
+serializer::calc_size(dat)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Serialized results from this package and base::serialize should be identical
@@ -115,11 +110,11 @@ serializer::unmarshall(v1)
 
 ## What's the upper bound on serialization speed?
 
-`calc_size_robust()` can be used to calculate the size of a serialized object,
+`calc_size()` can be used to calculate the size of a serialized object,
 but does not actually try and create the serialized object.
 
 Because this does not do any memory allocation, or copying of bytes, the speed
-of `calc_size_robust()` should give an approximation of the maximum 
+of `calc_size()` should give an approximation of the maximum 
 throughput of the serialization process when using R's internal serialization
 mechanism.
 
@@ -151,10 +146,10 @@ obj4 <- sample(10)
 # go through seritalization process, but only count the bytes
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 res <- bench::mark(
-  calc_size_robust(obj1),
-  calc_size_robust(obj2),
-  calc_size_robust(obj3),
-  calc_size_robust(obj4),
+  calc_size(obj1),
+  calc_size(obj2),
+  calc_size(obj3),
+  calc_size(obj4),
   check = FALSE
 )
 
@@ -191,7 +186,6 @@ res <- bench::mark(
   serialize(obj1, NULL, xdr = FALSE),
   marshall(obj1),
   marshall_fast(obj1),
-  marshall_fast(obj1, fast = TRUE),
   check = TRUE
 )
 
@@ -215,7 +209,6 @@ res <- bench::mark(
   serialize(obj2, NULL, xdr = FALSE),
   marshall(obj2),
   marshall_fast(obj2),
-  marshall_fast(obj2, fast = TRUE),
   check = TRUE
 )
 
@@ -239,7 +232,6 @@ res <- bench::mark(
   serialize(obj2, NULL, xdr = FALSE),
   marshall(obj2),
   marshall_fast(obj2),
-  marshall_fast(obj2, fast = TRUE),
   check = TRUE
 )
 

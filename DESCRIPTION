@@ -1,14 +1,14 @@
 Package: serializer
 Type: Package
 Title: Expose the Serialization Interface
-Version: 0.1.5
+Version: 0.1.6
 Author: mikefc
 Maintainer: mikefc <mikefc@coolbutuseless.com>
 Description: Expose the Serialization interface internal to R.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Suggests: 
     testthat,
     knitr,
