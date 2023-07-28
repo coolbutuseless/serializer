@@ -35,10 +35,13 @@ dynamic_buffer_t *init_buffer(int nbytes) {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Naive buffer expansion - double it every time space runs out
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void expand_buffer(dynamic_buffer_t *buf) {
+void expand_buffer(dynamic_buffer_t *buf, R_xlen_t length) {
 
   double factor = 2;
-  buf->length = (R_xlen_t)(factor * buf->length);
+
+  do {
+    buf->length = (R_xlen_t)(factor * buf->length);
+  } while (buf->length < buf->pos + length);
 
   if (buf->length > R_XLEN_T_MAX) {
     error("Requested buffer expandsion too large: %td\n", buf->length);
@@ -66,8 +69,8 @@ void write_byte(R_outpstream_t stream, int c) {
   dynamic_buffer_t *buf = (dynamic_buffer_t *)stream->data;
 
   // Expand the buffer if it's out space
-  while (buf->pos >= buf->length) {
-    expand_buffer(buf);
+  if (buf->pos >= buf->length) {
+    expand_buffer(buf, 1);
   }
 
   buf->data[buf->pos++] = (unsigned char)c;
@@ -84,8 +87,8 @@ void write_bytes(R_outpstream_t stream, void *src, int length) {
   dynamic_buffer_t *buf = (dynamic_buffer_t *)stream->data;
 
   // Expand the buffer if it's out space
-  while (buf->pos + length > buf->length) {
-    expand_buffer(buf);
+  if (buf->pos + length > buf->length) {
+    expand_buffer(buf, length);
   }
 
   memcpy(buf->data + buf->pos, src, length);
