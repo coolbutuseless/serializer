@@ -6,7 +6,7 @@
 <!-- badges: start -->
 
 ![](https://img.shields.io/badge/cool-useless-green.svg)
-[![R-CMD-check](https://github.com/coolbutuseless/serializer/workflows/R-CMD-check/badge.svg)](https://github.com/coolbutuseless/serializer/actions)
+[![R-CMD-check](https://github.com/coolbutuseless/serializer/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/coolbutuseless/serializer/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 `serializer` is a package which demonstrates how to use R’s internal
@@ -39,7 +39,7 @@ You can install from
 remotes::install_github('coolbutuseless/serializer')
 ```
 
-## Example
+## Example - serialize/unserialize with raw vectors
 
 ``` r
 library(serializer)
@@ -82,6 +82,18 @@ head(v1, 200)
 # Unmarshall the raw bytes back into an object  
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 serializer::unmarshall(v1)
+#>                mpg cyl disp  hp drat    wt  qsec vs am gear carb
+#> Mazda RX4     21.0   6  160 110 3.90 2.620 16.46  0  1    4    4
+#> Mazda RX4 Wag 21.0   6  160 110 3.90 2.875 17.02  0  1    4    4
+#> Datsun 710    22.8   4  108  93 3.85 2.320 18.61  1  1    4    1
+```
+
+## Example - serialize/unserialize with connections
+
+``` r
+tmp <- tempfile()
+serializer::marshall(head(mtcars, 3), gzfile(tmp))
+serializer::unmarshall(gzfile(tmp))
 #>                mpg cyl disp  hp drat    wt  qsec vs am gear carb
 #> Mazda RX4     21.0   6  160 110 3.90 2.620 16.46  0  1    4    4
 #> Mazda RX4 Wag 21.0   6  160 110 3.90 2.875 17.02  0  1    4    4
@@ -151,9 +163,9 @@ res %>%
 
 | expression                 |   median | itr/sec |  MB |    GB/s |
 |:---------------------------|---------:|--------:|----:|--------:|
-| calc_serialized_size(obj1) |   5.37µs |  177525 | 114 | 20727.9 |
-| calc_serialized_size(obj2) |   1.52µs |  537288 |   5 |  3218.7 |
-| calc_serialized_size(obj3) |   2.99µs |  320014 |  38 | 12398.6 |
-| calc_serialized_size(obj4) | 942.96ns | 1078054 |   0 |     0.0 |
+| calc_serialized_size(obj1) |   5.37µs |  173303 | 114 | 20727.4 |
+| calc_serialized_size(obj2) |   1.68µs |  571156 |   5 |  2904.6 |
+| calc_serialized_size(obj3) |   3.03µs |  319307 |  38 | 12231.1 |
+| calc_serialized_size(obj4) | 984.06ns | 1052272 |   0 |     0.0 |
 
 Maximum possible throughput of serialization
