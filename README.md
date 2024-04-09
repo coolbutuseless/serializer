@@ -111,9 +111,9 @@ speed of `calc_serialized_size()` should give an approximation of the
 maximum throughput of the serialization process when using R’s internal
 serialization mechanism.
 
-The speeds below seem ridiculous, because at its core, serialization is
-just passing *pointers* + *lengths* to an output stream, and doing very
-very little actual memory allocation or copying.
+The speeds below seem ridiculously fast! This is because serialization
+is just passing *pointers* + *lengths* to an output stream, and in this
+special case doing very very little actual memory allocation or copying.
 
 ``` r
 
@@ -124,7 +124,6 @@ N <- 1e7
 obj1 <- data.frame(x = sample(N), y = runif(N))
 obj2 <- do.call(rbind, replicate(1000, iris, simplify = FALSE))
 obj3 <- sample(N)
-obj4 <- sample(10)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Calc sizes of test objects
@@ -135,8 +134,6 @@ obj4 <- sample(10)
 #> 5.40 MB
 (n3 <- lobstr::obj_size(obj3))
 #> 40.00 MB
-(n4 <- lobstr::obj_size(obj4))
-#> 96 B
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # go through seritalization process, but only count the bytes
@@ -145,7 +142,6 @@ res <- bench::mark(
   calc_serialized_size(obj1),
   calc_serialized_size(obj2),
   calc_serialized_size(obj3),
-  calc_serialized_size(obj4),
   check = FALSE
 )
 
@@ -154,18 +150,18 @@ res <- bench::mark(
 # calc theoretical upper limit
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 res %>% 
-  mutate(MB = round(as.numeric(c(n1, n2, n3, n4))/1024^2)) %>%
+  mutate(MB = as.numeric(c(n1, n2, n3))/1024^2) %>%
   mutate(`GB/s` = round(MB/1024 / as.numeric(median), 1)) %>%
   mutate(`itr/sec` = round(`itr/sec`)) %>%
+  mutate(MB = round(MB)) %>% 
   select(expression, median, `itr/sec`, MB, `GB/s`) %>%
   knitr::kable(caption = "Maximum possible throughput of serialization")
 ```
 
-| expression                 |   median | itr/sec |  MB |    GB/s |
-|:---------------------------|---------:|--------:|----:|--------:|
-| calc_serialized_size(obj1) |   5.37µs |  173303 | 114 | 20727.4 |
-| calc_serialized_size(obj2) |   1.68µs |  571156 |   5 |  2904.6 |
-| calc_serialized_size(obj3) |   3.03µs |  319307 |  38 | 12231.1 |
-| calc_serialized_size(obj4) | 984.06ns | 1052272 |   0 |     0.0 |
+| expression                 | median | itr/sec |  MB |    GB/s |
+|:---------------------------|-------:|--------:|----:|--------:|
+| calc_serialized_size(obj1) | 5.54µs |  176639 | 114 | 20191.1 |
+| calc_serialized_size(obj2) |  1.6µs |  568329 |   5 |  3146.1 |
+| calc_serialized_size(obj3) |  3.2µs |  314033 |  38 | 11649.1 |
 
 Maximum possible throughput of serialization

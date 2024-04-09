@@ -118,9 +118,9 @@ of `calc_serialized_size()` should give an approximation of the maximum
 throughput of the serialization process when using R's internal serialization
 mechanism.
 
-The speeds below seem ridiculous, because at its core, serialization is just passing 
-*pointers* + *lengths* to an output stream, and doing very very little actual 
-memory allocation or copying.
+The speeds below seem ridiculously fast!  This is because serialization is just passing 
+*pointers* + *lengths* to an output stream, and in this special case doing 
+very very little actual memory allocation or copying.
 
 
 ```{r}
@@ -132,7 +132,6 @@ N <- 1e7
 obj1 <- data.frame(x = sample(N), y = runif(N))
 obj2 <- do.call(rbind, replicate(1000, iris, simplify = FALSE))
 obj3 <- sample(N)
-obj4 <- sample(10)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Calc sizes of test objects
@@ -140,7 +139,6 @@ obj4 <- sample(10)
 (n1 <- lobstr::obj_size(obj1))
 (n2 <- lobstr::obj_size(obj2))
 (n3 <- lobstr::obj_size(obj3))
-(n4 <- lobstr::obj_size(obj4))
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # go through seritalization process, but only count the bytes
@@ -149,7 +147,6 @@ res <- bench::mark(
   calc_serialized_size(obj1),
   calc_serialized_size(obj2),
   calc_serialized_size(obj3),
-  calc_serialized_size(obj4),
   check = FALSE
 )
 
@@ -158,9 +155,10 @@ res <- bench::mark(
 # calc theoretical upper limit
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 res %>% 
-  mutate(MB = round(as.numeric(c(n1, n2, n3, n4))/1024^2)) %>%
+  mutate(MB = as.numeric(c(n1, n2, n3))/1024^2) %>%
   mutate(`GB/s` = round(MB/1024 / as.numeric(median), 1)) %>%
   mutate(`itr/sec` = round(`itr/sec`)) %>%
+  mutate(MB = round(MB)) %>% 
   select(expression, median, `itr/sec`, MB, `GB/s`) %>%
   knitr::kable(caption = "Maximum possible throughput of serialization")
 ```
