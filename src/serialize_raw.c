@@ -9,50 +9,106 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "calc-serialized-size.h"
 
-#include "buffer-dynamic.h"
-#include "buffer-static.h"
-#include "calc-size-robust.h"
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Serialize an R object
+// The data buffer.
+// Needs total length and pos to keep track of how much data it contains
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SEXP marshall_(SEXP robj) {
+typedef struct {
+  R_xlen_t length;
+  R_xlen_t pos;
+  unsigned char *data;
+} static_buffer_t;
 
-  // Create the buffer for the serialized representation
-  // See also: `expand_buffer()` which re-allocates the memory buffer if
-  // it runs out of space
-  dynamic_buffer_t *buf = init_buffer(16384);
 
-  // Create the output stream structure
-  struct R_outpstream_st output_stream;
-
-  // Initialise the output stream structure
-  R_InitOutPStream(
-    &output_stream,          // The stream object which wraps everything
-    (R_pstream_data_t) buf,  // The actual data
-    R_pstream_binary_format, // Store as binary
-    3,                       // Version = 3 for R >3.5.0 See `?base::serialize`
-    write_byte,              // Function to write single byte to buffer
-    write_bytes,             // Function for writing multiple bytes to buffer
-    NULL,                    // Func for special handling of reference data.
-    R_NilValue               // Data related to reference data handling
-  );
-
-  // Serialize the object into the output_stream
-  R_Serialize(robj, &output_stream);
-
-  // Copy just the valid bytes to return to the user
-  SEXP res_ = PROTECT(allocVector(RAWSXP, buf->pos));
-  memcpy(RAW(res_), buf->data, buf->pos);
-
-  // Free all the memory
-  free(buf->data);
-  free(buf);
-  UNPROTECT(1);
-  return res_;
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Initialise an empty buffer to hold 'nbytes'
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+static_buffer_t *init_static_buffer(int nbytes, unsigned char *data) {
+  static_buffer_t *buf = (static_buffer_t *)malloc(sizeof(static_buffer_t));
+  if (buf == NULL) {
+    error("init_buffer(): cannot malloc buffer");
+  }
+  
+  buf->data = data;
+  
+  buf->length = nbytes;
+  buf->pos = 0;
+  
+  return buf;
 }
 
+
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Write a byte into the buffer at the current location.
+// The actual buffer is encapsulated as part of the stream structure, so you
+// have to extract it first
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void write_byte_to_static_buffer(R_outpstream_t stream, int c) {
+  static_buffer_t *buf = (static_buffer_t *)stream->data;
+  
+  // Expand the buffer if it's out space
+  while (buf->pos >= buf->length) {
+    error("write byte static buffer failed.\n");
+  }
+  
+  buf->data[buf->pos++] = (unsigned char)c;
+}
+
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Write multiple bytes into the buffer at the current location.
+// The actual buffer is encapsulated as part of the stream structure, so you
+// have to extract it first
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void write_bytes_to_static_buffer(R_outpstream_t stream, void *src, int length) {
+  static_buffer_t *buf = (static_buffer_t *)stream->data;
+  
+  // Expand the buffer if it's out space
+  while (buf->pos + length > buf->length) {
+    error("write bytes static buffer failed\n");
+  }
+  
+  memcpy(buf->data + buf->pos, src, length);
+  
+  buf->pos += length;
+}
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Read a byte from the serialized stream
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+int read_byte_from_static_buffer(R_inpstream_t stream) {
+  static_buffer_t *buf = (static_buffer_t *)stream->data;
+  
+  if (buf->pos >= buf->length) {
+    error("read_byte(): overflow");
+  }
+  
+  return buf->data[buf->pos++];
+}
+
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Read multiple bytes from the serialized stream
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void read_bytes_from_static_buffer(R_inpstream_t stream, void *dst, int length) {
+  static_buffer_t *buf = (static_buffer_t *)stream->data;
+  
+  if (buf->pos + length > buf->length) {
+    error("read_bytes(): overflow");
+  }
+  
+  memcpy(dst, buf->data + buf->pos, length);
+  
+  buf->pos += length;
+}
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -106,11 +162,11 @@ SEXP unmarshall_(SEXP vec_) {
 // Serialize an R object. Precalculate the resulting size so that
 // the number of memory allocations can be minimised
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SEXP marshall_fast_(SEXP robj) {
+SEXP marshall_(SEXP robj) {
 
   // Figure out how much memory is needed
   int total_size;
-  total_size = calc_size_robust(robj);
+  total_size = calc_serialized_size(robj);
 
   // Allocate an exact-sized R RAW vector to hold the result
   SEXP res_ = PROTECT(allocVector(RAWSXP, total_size));
@@ -139,3 +195,5 @@ SEXP marshall_fast_(SEXP robj) {
   UNPROTECT(1);
   return res_;
 }
+
+

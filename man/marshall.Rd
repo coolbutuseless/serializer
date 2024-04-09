@@ -2,19 +2,24 @@
 % Please edit documentation in R/serialize.R
 \name{marshall}
 \alias{marshall}
-\alias{unmarshall}
-\title{Serialize/unserialize an R object to/from a raw vector.}
+\title{Serialize an R object to a raw vector or connection.}
 \usage{
-marshall(robj)
-
-unmarshall(raw_vec)
+marshall(robj, con = NULL)
 }
 \arguments{
 \item{robj}{R object}
 
-\item{raw_vec}{R object serialized as a raw vector}
+\item{con}{connection to write the data}
+}
+\value{
+If \code{con} is a connection, return nothing.  Otherwise, return 
+        a raw vector containing the serialized data.
 }
 \description{
-This is just a demonstration package showing how serialization may be done
-directly in C, rather than using \code{base::serialize()}.
+Serialize an R object to a raw vector or connection.
+}
+\examples{
+tmp <- tempfile()
+marshall(mtcars, con = gzfile(tmp))
+unmarshall(gzfile(tmp))
 }

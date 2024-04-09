@@ -36,20 +36,15 @@ It is perhaps only really interesting if you want to look at and/or steal the C
 code.  It's under the [MIT license](https://mit-license.org/), so please feel 
 free to re-use in your own projects.
 
-If you want a rock solid version of this package that already exists, use [RApiSerialize](https://cran.r-project.org/web/packages/RApiSerialize/index.html).
-
 
 ## What's in the box
 
 * `marshall()`/`unmarshall()` are direct analogues for `base::serialize()` and 
   `base::unserialize()`
-* `calc_size()` calculates the exact size of the serialized
+    * These functions can serialize/unserialize from a raw vector or a connection 
+* `calc_serialized_size()` calculates the exact size of the serialized
   representation of an object using R's seriazliation infrastructure but not
   actually allocating any bytes.
-* `marshall_fast()` is a modified version of `marshall()` which 
-  minimises memory allocations by pre-calculating the final size of the 
-  serialized representation.  It speeds up the serialization process for
-  larger objects.
 
 ## Installation
 
@@ -60,19 +55,9 @@ You can install from [GitHub](https://github.com/coolbutuseless/serializer) with
 remotes::install_github('coolbutuseless/serializer')
 ```
 
-
-## Notes
-
-* Using R's serialization infrastructure from C involves 2 main parts:
-    * a buffer (which could be memory, a file, a pipe, etc) with accompanying 
-      functions for reading and writing bytes to/from the buffer
-    * input/output stream wrappers around this buffer initialised and created
-      using R internals
-        * Input stream: `R_inpstream_st`, `R_InitInPStream()`
-        * Output stream: `R_outpstream_st`, `R_InitOutPStream()`
         
         
-## Example
+## Example - serialize/unserialize with raw vectors
 
 
 ```{r example}
@@ -86,12 +71,12 @@ dat <- head(mtcars, 3)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Calculate exactly how many bytes this will take once serialized
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-serializer::calc_size(dat)
+serializer::calc_serialized_size(dat)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Serialized results from this package and base::serialize should be identical
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-v1 <- serializer::marshall(head(dat))
+v1 <- serializer::marshall(dat)
 v2 <- base::serialize(dat, NULL, xdr = FALSE)
 identical(v1, v2)
 
@@ -108,13 +93,28 @@ serializer::unmarshall(v1)
 ```
 
 
+
+        
+## Example - serialize/unserialize with connections
+
+
+```{r example2}
+tmp <- tempfile()
+serializer::marshall(head(mtcars, 3), gzfile(tmp))
+serializer::unmarshall(gzfile(tmp))
+```
+
+
+
+
+
 ## What's the upper bound on serialization speed?
 
-`calc_size()` can be used to calculate the size of a serialized object,
+`calc_serialized_size()` can be used to calculate the size of a serialized object,
 but does not actually try and create the serialized object.
 
 Because this does not do any memory allocation, or copying of bytes, the speed
-of `calc_size()` should give an approximation of the maximum 
+of `calc_serialized_size()` should give an approximation of the maximum 
 throughput of the serialization process when using R's internal serialization
 mechanism.
 
@@ -146,10 +146,10 @@ obj4 <- sample(10)
 # go through seritalization process, but only count the bytes
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 res <- bench::mark(
-  calc_size(obj1),
-  calc_size(obj2),
-  calc_size(obj3),
-  calc_size(obj4),
+  calc_serialized_size(obj1),
+  calc_serialized_size(obj2),
+  calc_serialized_size(obj3),
+  calc_serialized_size(obj4),
   check = FALSE
 )
 
@@ -158,7 +158,7 @@ res <- bench::mark(
 # calc theoretical upper limit
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 res %>% 
-  mutate(MB = round(c(n1, n2, n3, n4)/1024^2)) %>%
+  mutate(MB = round(as.numeric(c(n1, n2, n3, n4))/1024^2)) %>%
   mutate(`GB/s` = round(MB/1024 / as.numeric(median), 1)) %>%
   mutate(`itr/sec` = round(`itr/sec`)) %>%
   select(expression, median, `itr/sec`, MB, `GB/s`) %>%
@@ -166,95 +166,4 @@ res %>%
 ```
 
 
-## Minimising memory allocations can increase serialization speed
 
-`marshall_fast()` pre-calculates the size of the serialized data,
-and performs only **1** memory allocation (exclusing whatever R is doing internally).
-
-For small objects, the pre-calculation of size increases overall serialization time,
-but for medium-to-large objects it is often a win.
-
-#### data.frame with 1e4 rows
-
-```{r}
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# data.frame with 1e4 rows
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-N <- 1e4; obj1 <- data.frame(x = sample(N), y = runif(N))
-
-res <- bench::mark(
-  serialize(obj1, NULL, xdr = FALSE),
-  marshall(obj1),
-  marshall_fast(obj1),
-  check = TRUE
-)
-
-res %>%
-  select(expression, median, `itr/sec`) %>%
-  knitr::kable()
-
-plot(res) + theme_bw()
-```
-
-
-#### data.frame with 1e6 rows
-
-```{r}
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# data.frame with 1e6 rows
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-N <- 1e6; obj2 <- data.frame(x = sample(N), y = runif(N))
-
-res <- bench::mark(
-  serialize(obj2, NULL, xdr = FALSE),
-  marshall(obj2),
-  marshall_fast(obj2),
-  check = TRUE
-)
-
-res %>%
-  select(expression, median, `itr/sec`) %>%
-  knitr::kable()
-
-plot(res) + theme_bw()
-```
-
-
-#### data.frame with 1e6 rows
-
-```{r}
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# data.frame with 32000 rows
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-obj2 <- do.call(rbind, replicate(1000, mtcars, simplify = FALSE))
-
-res <- bench::mark(
-  serialize(obj2, NULL, xdr = FALSE),
-  marshall(obj2),
-  marshall_fast(obj2),
-  check = TRUE
-)
-
-res %>%
-  select(expression, median, `itr/sec`) %>%
-  knitr::kable()
-
-plot(res) + theme_bw()
-```
-
-
-
-
-
-## Related Software
-
-* [RApiSerialize](https://cran.r-project.org/web/packages/RApiSerialize/index.html)
-* [qs](https://cran.r-project.org/web/packages/qs/index.html)
-* [fst](https://cran.r-project.org/web/packages/fst/index.html)
-
-
-## Acknowledgements
-
-* R Core for developing and maintaining the language.
-* CRAN maintainers, for patiently shepherding packages onto CRAN and maintaining
-  the repository

@@ -1,46 +1,60 @@
 
 
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#' Serialize/unserialize an R object to/from a raw vector.
-#'
-#' This is just a demonstration package showing how serialization may be done
-#' directly in C, rather than using \code{base::serialize()}.
+#' Serialize an R object to a raw vector or connection.
 #'
 #' @param robj R object
-#' @param raw_vec R object serialized as a raw vector
+#' @param con connection to write the data
 #'
+#' @return If \code{con} is a connection, return nothing.  Otherwise, return 
+#'         a raw vector containing the serialized data.
 #' @export
+#'
+#' @examples
+#' tmp <- tempfile()
+#' marshall(mtcars, con = gzfile(tmp))
+#' unmarshall(gzfile(tmp))
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-marshall <- function(robj) {
-  .Call(marshall_, robj)
+marshall <- function(robj, con = NULL) {
+  if (is.null(con)) {
+    .Call(marshall_, robj)
+  } else {
+    stopifnot(inherits(con, "connection"))
+    if(!isOpen(con)){
+      on.exit(close(con)) 
+      open(con, "wb")
+    }
+    invisible(.Call(marshall_con_, robj, con))
+  }
 }
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#' @rdname marshall
+#' Unserialize an R object from a raw vector or connection
+#' 
+#' @param x A raw vector containing serialized data or a connection 
+#' 
+#' @return Return the unserialized data
 #' @export
+#'
+#' @examples
+#' tmp <- tempfile()
+#' marshall(mtcars, con = gzfile(tmp))
+#' unmarshall(gzfile(tmp))
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-unmarshall <- function(raw_vec) {
-  .Call(unmarshall_, raw_vec)
+unmarshall <- function(x) {
+  if (inherits(x, "connection")) {
+    con <- x
+    if(!isOpen(con)){
+      on.exit(close(con)) 
+      open(con, "rb")
+    }
+    .Call(unmarshall_con_, con)
+  } else {
+    .Call(unmarshall_, x)
+  }
 }
-
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#' Serialize an R object to a raw vector, while minimising memory allocations
-#'
-#' This is a slightly more complex version of \code{marshall()} which
-#' pre-calculates the size of the serialized representation.  This means there
-#' only needs to be 1 memory allocation (not including those internal to R),
-#' and gives a speed boost for medium-to-large objects
-#'
-#' @param robj R object
-#'
-#' @export
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-marshall_fast <- function(robj) {
-  .Call(marshall_fast_, robj)
-}
-
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -50,10 +64,14 @@ marshall_fast <- function(robj) {
 #' does nothing with the bytes other than to tally the total length.
 #'
 #' @param robj R object
+#' @return number of bytes needed to serialize this object
 #'
 #' @export
+#' 
+#' @examples
+#' calc_serialized_size(mtcars)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-calc_size <- function(robj) {
-  .Call(calc_size_robust_, robj)
+calc_serialized_size <- function(robj) {
+  .Call(calc_serialized_size_, robj)
 }
 

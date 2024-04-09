@@ -1,8 +1,13 @@
 
+# serializer 0.2.0   2024-04-09
+
+* Remove the dynamic buffer example. All work is now performed with static buffers.
+* Added support for serializing with connection objects
+
 # serializer 0.1.6   2021-12-11
 
 * Remove `calc_size_fast()` as it's just a little too hacky.
-* Rename `calc_size_robust()` to `calc_size()`
+* Rename `calc_serialized_size()` to `calc_size()`
 
 # serializer 0.1.5   2021-04-11
 
@@ -10,10 +15,10 @@
 
 # serializer 0.1.4   2020-09-24
 
-* Rename: `calc_marshalled_size()` -> `calc_size_robust()`
+* Rename: `calc_marshalled_size()` -> `calc_serialized_size()`
 * Rename: `marshall_minimize_malloc()` -> `marshall_fast()`
 * Feature: `calc_size_fast()` a faster (but less robust) version of 
-  `calc_size_robust()`
+  `calc_serialized_size()`
 
 # serializer 0.1.3   2020-09-22
 

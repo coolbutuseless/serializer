@@ -38,7 +38,7 @@ void count_bytes(R_outpstream_t stream, void *src, int length) {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Serialize an R object, but ony count the bytes.  C function
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-int calc_size_robust(SEXP robj) {
+int calc_serialized_size(SEXP robj) {
 
   // Initialise the count
   int count = 0;
@@ -69,6 +69,6 @@ int calc_size_robust(SEXP robj) {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Serialize an R object, but ony count the bytes. R shim function
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SEXP calc_size_robust_(SEXP robj) {
-  return ScalarInteger(calc_size_robust(robj));
+SEXP calc_serialized_size_(SEXP robj) {
+  return ScalarInteger(calc_serialized_size(robj));
 }
