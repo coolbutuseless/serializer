@@ -2,58 +2,84 @@
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#' Serialize an R object to a raw vector or connection.
+#' Serialize an R object to a raw vector 
 #'
 #' @param robj R object
-#' @param con connection to write the data
 #'
-#' @return If \code{con} is a connection, return nothing.  Otherwise, return 
-#'         a raw vector containing the serialized data.
+#' @return a raw vector containing the serialized data.
 #' @export
 #'
 #' @examples
-#' tmp <- tempfile()
-#' marshall(mtcars, con = gzfile(tmp))
-#' unmarshall(gzfile(tmp))
+#' m <- marshall_raw(head(mtcars))
+#' m
+#' unmarshall_raw(m)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-marshall <- function(robj, con = NULL) {
-  if (is.null(con)) {
-    .Call(marshall_, robj)
-  } else {
-    stopifnot(inherits(con, "connection"))
-    if(!isOpen(con)){
-      on.exit(close(con)) 
-      open(con, "wb")
-    }
-    invisible(.Call(marshall_con_, robj, con))
-  }
+marshall_raw <- function(robj) {
+  .Call(marshall_raw_, robj)
 }
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#' Unserialize an R object from a raw vector or connection
+#' Serialize an R object to a connection
 #' 
-#' @param x A raw vector containing serialized data or a connection 
-#' 
-#' @return Return the unserialized data
+#' @inheritParams marshall_raw
+#' @param con connection to write the data to
+#'
+#' @return \code{none}
 #' @export
 #'
 #' @examples
 #' tmp <- tempfile()
-#' marshall(mtcars, con = gzfile(tmp))
-#' unmarshall(gzfile(tmp))
+#' marshall_con(mtcars, con = gzfile(tmp))
+#' unmarshall_con(gzfile(tmp))
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-unmarshall <- function(x) {
-  if (inherits(x, "connection")) {
-    con <- x
-    if(!isOpen(con)){
-      on.exit(close(con)) 
-      open(con, "rb")
-    }
-    .Call(unmarshall_con_, con)
-  } else {
-    .Call(unmarshall_, x)
+marshall_con <- function(robj, con = NULL) {
+  stopifnot(inherits(con, "connection"))
+  if(!isOpen(con)){
+    on.exit(close(con)) 
+    open(con, "wb")
   }
+  invisible(.Call(marshall_con_, robj, con))
+}
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#' Unserialize an R object from a raw vector 
+#' 
+#' @param raw_vec A raw vector containing serialized data 
+#' 
+#' @return Return the unserialized R object
+#' @export
+#'
+#' @examples
+#' m <- marshall_raw(head(mtcars))
+#' m
+#' unmarshall_raw(m)
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+unmarshall_raw <- function(raw_vec) {
+  .Call(unmarshall_raw_, raw_vec)
+}
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#' Unserialize an R object from a connection
+#' 
+#' @param con A connection from which to read serialized data
+#' 
+#' @return Return the unserialized R object
+#' @export
+#'
+#' @examples
+#' tmp <- tempfile()
+#' marshall_con(mtcars, con = gzfile(tmp))
+#' unmarshall_con(gzfile(tmp))
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+unmarshall_con <- function(con) {
+  if(!isOpen(con)){
+    on.exit(close(con)) 
+    open(con, "rb")
+  }
+  .Call(unmarshall_con_, con)
 }
 
 

@@ -17,8 +17,7 @@
 // have to extract it first
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void count_byte(R_outpstream_t stream, int c) {
-  int *count = (int *)stream->data;
-  *count += 1;
+  error("count_byte(): This function is never called for binary serialization");
 }
 
 
@@ -36,7 +35,8 @@ void count_bytes(R_outpstream_t stream, void *src, int length) {
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Serialize an R object, but ony count the bytes.  C function
+// Serialize an R object, but only count the bytes.  
+// This function is only visible to C code
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 int calc_serialized_size(SEXP robj) {
 
@@ -49,7 +49,7 @@ int calc_serialized_size(SEXP robj) {
   // Initialise the output stream structure
   R_InitOutPStream(
     &output_stream,            // The stream object which wraps everything
-    (R_pstream_data_t) &count, // The actual data
+    (R_pstream_data_t) &count, // user data that persists within the process
     R_pstream_binary_format,   // Store as binary
     3,                         // Version = 3 for R >3.5.0 See `?base::serialize`
     count_byte,                // Function to write single byte to buffer
@@ -67,7 +67,8 @@ int calc_serialized_size(SEXP robj) {
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Serialize an R object, but ony count the bytes. R shim function
+// Serialize an R object, but only count the bytes. 
+// This function is callable from R
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 SEXP calc_serialized_size_(SEXP robj) {
   return ScalarInteger(calc_serialized_size(robj));

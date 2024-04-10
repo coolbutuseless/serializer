@@ -10,8 +10,7 @@
 <!-- badges: end -->
 
 `serializer` is a package which demonstrates how to use R’s internal
-serialization interface from C. The code is the minimum amount of code
-required to do this, and I’ve inserted plenty of comments for guidance.
+serialization interface from C.
 
 This package was developed to help me figure out the serialization
 process in R. It is perhaps only really interesting if you want to look
@@ -21,13 +20,14 @@ your own projects.
 
 ## What’s in the box
 
-- `marshall()`/`unmarshall()` are direct analogues for
+- `marshall_raw()`/`unmarshall_raw()` are direct analogues for
   `base::serialize()` and `base::unserialize()`
-  - These functions can serialize/unserialize from a raw vector or a
-    connection
+- `marshall_con()`/`unmarshall_con()` are the same as above but for
+  connections
 - `calc_serialized_size()` calculates the exact size of the serialized
-  representation of an object using R’s seriazliation infrastructure but
-  not actually allocating any bytes.
+  representation of an object using R’s serialization infrastructure -
+  but without actually performing the serialization. This is an
+  extremely fast calculation.
 
 ## Installation
 
@@ -58,7 +58,7 @@ serializer::calc_serialized_size(dat)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Serialized results from this package and base::serialize should be identical
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-v1 <- serializer::marshall(dat)
+v1 <- serializer::marshall_raw(dat)
 v2 <- base::serialize(dat, NULL, xdr = FALSE)
 identical(v1, v2)
 #> [1] TRUE
@@ -81,7 +81,7 @@ head(v1, 200)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Unmarshall the raw bytes back into an object  
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-serializer::unmarshall(v1)
+serializer::unmarshall_raw(v1)
 #>                mpg cyl disp  hp drat    wt  qsec vs am gear carb
 #> Mazda RX4     21.0   6  160 110 3.90 2.620 16.46  0  1    4    4
 #> Mazda RX4 Wag 21.0   6  160 110 3.90 2.875 17.02  0  1    4    4
@@ -90,10 +90,21 @@ serializer::unmarshall(v1)
 
 ## Example - serialize/unserialize with connections
 
+Currently (R 4.3.x) there is no way to handle connections totally within
+C, as the R API does not expose the functionality.
+
+Instead, to work with connections the following steps need to be taken:
+
+- User passes in the connection object e.g. `gzfile()`
+- We must open the connection if necessary
+- Pass the connection into C
+- To read bytes within C from the connection, a call needs to be made
+  back into R to use `readBin()` and `writeBin()`
+
 ``` r
 tmp <- tempfile()
-serializer::marshall(head(mtcars, 3), gzfile(tmp))
-serializer::unmarshall(gzfile(tmp))
+serializer::marshall_con(head(mtcars, 3), gzfile(tmp))
+serializer::unmarshall_con(gzfile(tmp))
 #>                mpg cyl disp  hp drat    wt  qsec vs am gear carb
 #> Mazda RX4     21.0   6  160 110 3.90 2.620 16.46  0  1    4    4
 #> Mazda RX4 Wag 21.0   6  160 110 3.90 2.875 17.02  0  1    4    4
@@ -150,8 +161,8 @@ res <- bench::mark(
 # calc theoretical upper limit
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 res %>% 
-  mutate(MB = as.numeric(c(n1, n2, n3))/1000^2) %>%
-  mutate(`GB/s` = round(MB/1000 / as.numeric(median), 1)) %>%
+  mutate(MB = as.numeric(c(n1, n2, n3))/1024^2) %>%
+  mutate(`GB/s` = round(MB/1024 / as.numeric(median), 1)) %>%
   mutate(`itr/sec` = round(`itr/sec`)) %>%
   mutate(MB = round(MB)) %>% 
   select(expression, median, `itr/sec`, MB, `GB/s`) %>%
@@ -160,8 +171,8 @@ res %>%
 
 | expression                 | median | itr/sec |  MB |    GB/s |
 |:---------------------------|-------:|--------:|----:|--------:|
-| calc_serialized_size(obj1) | 5.54µs |  176639 | 120 | 18034.2 |
-| calc_serialized_size(obj2) |  1.6µs |  568329 |   5 |  3002.5 |
-| calc_serialized_size(obj3) |  3.2µs |  314033 |  40 | 12957.2 |
+| calc_serialized_size(obj1) | 5.45µs |  173865 | 114 | 20495.1 |
+| calc_serialized_size(obj2) | 1.76µs |  545254 |   5 |  2853.6 |
+| calc_serialized_size(obj3) | 3.12µs |  319285 |  38 | 11955.4 |
 
 Maximum possible throughput of serialization

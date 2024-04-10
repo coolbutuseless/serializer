@@ -28,8 +28,7 @@ library(serializer)
 <!-- badges: end -->
 
 `serializer` is a package which demonstrates how to use R's internal 
-serialization interface from C.  The code is the minimum amount of code 
-required to do this, and I've inserted plenty of comments for guidance.
+serialization interface from C.
 
 This package was developed to help me figure out the serialization process in R.
 It is perhaps only really interesting if you want to look at and/or steal the C
@@ -39,12 +38,12 @@ free to re-use in your own projects.
 
 ## What's in the box
 
-* `marshall()`/`unmarshall()` are direct analogues for `base::serialize()` and 
+* `marshall_raw()`/`unmarshall_raw()` are direct analogues for `base::serialize()` and 
   `base::unserialize()`
-    * These functions can serialize/unserialize from a raw vector or a connection 
+* `marshall_con()`/`unmarshall_con()` are the same as above but for connections
 * `calc_serialized_size()` calculates the exact size of the serialized
-  representation of an object using R's seriazliation infrastructure but not
-  actually allocating any bytes.
+  representation of an object using R's serialization infrastructure - but without
+  actually performing the serialization.  This is an extremely fast calculation.
 
 ## Installation
 
@@ -76,7 +75,7 @@ serializer::calc_serialized_size(dat)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Serialized results from this package and base::serialize should be identical
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-v1 <- serializer::marshall(dat)
+v1 <- serializer::marshall_raw(dat)
 v2 <- base::serialize(dat, NULL, xdr = FALSE)
 identical(v1, v2)
 
@@ -89,7 +88,7 @@ head(v1, 200)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Unmarshall the raw bytes back into an object  
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-serializer::unmarshall(v1)
+serializer::unmarshall_raw(v1)
 ```
 
 
@@ -97,11 +96,21 @@ serializer::unmarshall(v1)
         
 ## Example - serialize/unserialize with connections
 
+Currently (R 4.3.x) there is no way to handle connections totally within C, as
+the R API does not expose the functionality.
+
+Instead, to work with connections the following steps need to be taken:
+
+* User passes in the connection object e.g. `gzfile()`
+* We must open the connection if necessary
+* Pass the connection into C
+* To read bytes within C from the connection, a call needs to be made back into R
+  to use `readBin()` and `writeBin()`
 
 ```{r example2}
 tmp <- tempfile()
-serializer::marshall(head(mtcars, 3), gzfile(tmp))
-serializer::unmarshall(gzfile(tmp))
+serializer::marshall_con(head(mtcars, 3), gzfile(tmp))
+serializer::unmarshall_con(gzfile(tmp))
 ```
 
 

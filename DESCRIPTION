@@ -1,7 +1,7 @@
 Package: serializer
 Type: Package
 Title: Expose R's Serialization Interface
-Version: 0.2.0
+Version: 0.2.1
 Author: mikefc
 Maintainer: mikefc <mikefc@coolbutuseless.com>
 Description: Expose R's serialization interface for serialing/unserializing

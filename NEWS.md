@@ -1,4 +1,13 @@
 
+# serializer 0.2.1   2024-04-10
+
+* Switch to SI size units in benchmarking.
+* Documentation refresh
+* Split `marshall()`/`unmarshall()` into
+    * `marshall_raw()`/`unmarshall_raw()` for raw vectors
+    * `marshall_con()`/`unmarshall_con()` for connections
+* Small refactor of buffer handling
+
 # serializer 0.2.0   2024-04-09
 
 * Remove the dynamic buffer example. All work is now performed with static buffers.
