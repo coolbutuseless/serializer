@@ -133,8 +133,8 @@ special case doing very very little actual memory allocation or copying.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 N <- 1e7
 obj1 <- data.frame(x = sample(N), y = runif(N))
-obj2 <- do.call(rbind, replicate(1000, iris, simplify = FALSE))
-obj3 <- sample(N)
+obj2 <- sample(N)
+obj3 <- do.call(rbind, replicate(1000, iris, simplify = FALSE))
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Calc sizes of test objects
@@ -142,9 +142,9 @@ obj3 <- sample(N)
 (n1 <- lobstr::obj_size(obj1))
 #> 120.00 MB
 (n2 <- lobstr::obj_size(obj2))
-#> 5.40 MB
-(n3 <- lobstr::obj_size(obj3))
 #> 40.00 MB
+(n3 <- lobstr::obj_size(obj3))
+#> 5.40 MB
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # go through seritalization process, but only count the bytes
@@ -161,18 +161,18 @@ res <- bench::mark(
 # calc theoretical upper limit
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 res %>% 
-  mutate(MB = as.numeric(c(n1, n2, n3))/1024^2) %>%
-  mutate(`GB/s` = round(MB/1024 / as.numeric(median), 1)) %>%
+  mutate(MB = as.numeric(c(n1, n2, n3))/1000^2) %>%
+  mutate(`GB/s` = round(MB/1000 / as.numeric(median), 1)) %>%
   mutate(`itr/sec` = round(`itr/sec`)) %>%
-  mutate(MB = round(MB)) %>% 
+  mutate(MB = round(MB, 1)) %>% 
   select(expression, median, `itr/sec`, MB, `GB/s`) %>%
   knitr::kable(caption = "Maximum possible throughput of serialization")
 ```
 
-| expression                 | median | itr/sec |  MB |    GB/s |
-|:---------------------------|-------:|--------:|----:|--------:|
-| calc_serialized_size(obj1) | 5.45µs |  173865 | 114 | 20495.1 |
-| calc_serialized_size(obj2) | 1.76µs |  545254 |   5 |  2853.6 |
-| calc_serialized_size(obj3) | 3.12µs |  319285 |  38 | 11955.4 |
+| expression                 | median | itr/sec |    MB |    GB/s |
+|:---------------------------|-------:|--------:|------:|--------:|
+| calc_serialized_size(obj1) | 5.74µs |  166146 | 120.0 | 20906.1 |
+| calc_serialized_size(obj2) | 3.12µs |  300112 |  40.0 | 12837.0 |
+| calc_serialized_size(obj3) | 1.56µs |  570836 |   5.4 |  3467.1 |
 
 Maximum possible throughput of serialization

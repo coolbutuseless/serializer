@@ -45,12 +45,12 @@ void read_bytes_from_connection(R_inpstream_t stream, void *dst, int length) {
   
   // Sanity check to see if any data returned
   if(len <= 0) {
-    error("read_bytes_from_connection() returned %i bytes read", len);
+    error("read_bytes_from_connection() returned %ld bytes read", len);
   }
   
   // Sanity check that we read the requested number of bytes from the connection
   if (len != length) {
-    error("read_bytes_from_connection(). Expected %i bytes to be read, but actually read %i", length, len);
+    error("read_bytes_from_connection(). Expected %i bytes to be read, but actually read %ld", length, len);
   }
   
   memcpy(dst, RAW(out), length);

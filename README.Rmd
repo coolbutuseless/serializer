@@ -139,8 +139,8 @@ very very little actual memory allocation or copying.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 N <- 1e7
 obj1 <- data.frame(x = sample(N), y = runif(N))
-obj2 <- do.call(rbind, replicate(1000, iris, simplify = FALSE))
-obj3 <- sample(N)
+obj2 <- sample(N)
+obj3 <- do.call(rbind, replicate(1000, iris, simplify = FALSE))
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Calc sizes of test objects
@@ -164,10 +164,10 @@ res <- bench::mark(
 # calc theoretical upper limit
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 res %>% 
-  mutate(MB = as.numeric(c(n1, n2, n3))/1024^2) %>%
-  mutate(`GB/s` = round(MB/1024 / as.numeric(median), 1)) %>%
+  mutate(MB = as.numeric(c(n1, n2, n3))/1000^2) %>%
+  mutate(`GB/s` = round(MB/1000 / as.numeric(median), 1)) %>%
   mutate(`itr/sec` = round(`itr/sec`)) %>%
-  mutate(MB = round(MB)) %>% 
+  mutate(MB = round(MB, 1)) %>% 
   select(expression, median, `itr/sec`, MB, `GB/s`) %>%
   knitr::kable(caption = "Maximum possible throughput of serialization")
 ```
