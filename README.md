@@ -150,8 +150,8 @@ res <- bench::mark(
 # calc theoretical upper limit
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 res %>% 
-  mutate(MB = as.numeric(c(n1, n2, n3))/1024^2) %>%
-  mutate(`GB/s` = round(MB/1024 / as.numeric(median), 1)) %>%
+  mutate(MB = as.numeric(c(n1, n2, n3))/1000^2) %>%
+  mutate(`GB/s` = round(MB/1000 / as.numeric(median), 1)) %>%
   mutate(`itr/sec` = round(`itr/sec`)) %>%
   mutate(MB = round(MB)) %>% 
   select(expression, median, `itr/sec`, MB, `GB/s`) %>%
@@ -160,8 +160,8 @@ res %>%
 
 | expression                 | median | itr/sec |  MB |    GB/s |
 |:---------------------------|-------:|--------:|----:|--------:|
-| calc_serialized_size(obj1) | 5.54µs |  176639 | 114 | 20191.1 |
-| calc_serialized_size(obj2) |  1.6µs |  568329 |   5 |  3146.1 |
-| calc_serialized_size(obj3) |  3.2µs |  314033 |  38 | 11649.1 |
+| calc_serialized_size(obj1) | 5.54µs |  176639 | 120 | 18034.2 |
+| calc_serialized_size(obj2) |  1.6µs |  568329 |   5 |  3002.5 |
+| calc_serialized_size(obj3) |  3.2µs |  314033 |  40 | 12957.2 |
 
 Maximum possible throughput of serialization
