@@ -4,14 +4,13 @@
 #include <R.h>
 #include <Rinternals.h>
 #include <Rdefines.h>
+#include <R_ext/Connections.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 #include "calc-serialized-size.h"
-#include "connection/connection.h"
-
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -29,7 +28,7 @@ int read_byte_from_connection(R_inpstream_t stream) {
 void read_bytes_from_connection(R_inpstream_t stream, void *dst, int length) {
   
   Rconnection rcon = (Rconnection)stream->data;
-  size_t nread = read_connection(rcon, dst, length);
+  size_t nread = R_ReadConnection(rcon, dst, length);
 
   // Sanity check that we read the requested number of bytes from the connection
   if (nread != length) {
@@ -51,7 +50,7 @@ void write_byte_to_connection(R_outpstream_t stream, int c) {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void write_bytes_to_connection(R_outpstream_t stream, void *src, int length) {
   Rconnection rcon = (Rconnection)stream->data;
-  write_connection(rcon, src, length);
+  R_WriteConnection(rcon, src, length);
 }
 
 
