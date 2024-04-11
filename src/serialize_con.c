@@ -4,30 +4,13 @@
 #include <R.h>
 #include <Rinternals.h>
 #include <Rdefines.h>
-#include <R_ext/Connections.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 #include "calc-serialized-size.h"
-
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// You can use 'R_ext/Connections.h' to allow for easy access to connections
-// in C, but these are classed as "non-API calls" and "R check" will fail.
-//
-// You can prbably do this for internal packages, but it'll never make it on 
-// to CRAN
-//
-// File ‘serializer/libs/serializer.so’:
-//   Found non-API calls to R: ‘R_GetConnection’, ‘R_ReadConnection’,
-//   ‘R_WriteConnection’
-// 
-// Compiled code should not call non-API entry points in R.
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
+#include "connection/connection.h"
 
 
 
@@ -46,7 +29,7 @@ int read_byte_from_connection(R_inpstream_t stream) {
 void read_bytes_from_connection(R_inpstream_t stream, void *dst, int length) {
   
   Rconnection rcon = (Rconnection)stream->data;
-  size_t nread = R_ReadConnection(rcon, dst, length);
+  size_t nread = read_connection(rcon, dst, length);
 
   // Sanity check that we read the requested number of bytes from the connection
   if (nread != length) {
@@ -68,7 +51,7 @@ void write_byte_to_connection(R_outpstream_t stream, int c) {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void write_bytes_to_connection(R_outpstream_t stream, void *src, int length) {
   Rconnection rcon = (Rconnection)stream->data;
-  R_WriteConnection(rcon, src, length);
+  write_connection(rcon, src, length);
 }
 
 
