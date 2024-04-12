@@ -16,7 +16,7 @@ extern SEXP unmarshall_con_(SEXP con_);
 extern SEXP marshall_con_illegal_(SEXP robj_, SEXP con_);
 extern SEXP unmarshall_con_illegal_(SEXP con_);
 
-extern SEXP init_smuggle_(SEXP rc_xptr);
+extern SEXP init_smuggle_(SEXP rc_xptr_, SEXP wc_xptr_);
 extern SEXP marshall_con_smuggle_(SEXP robj_, SEXP con_);
 extern SEXP unmarshall_con_smuggle_(SEXP con_);
 
@@ -37,7 +37,7 @@ static const R_CallMethodDef CEntries[] = {
   {"unmarshall_con_illegal_", (DL_FUNC) &unmarshall_con_illegal_, 1},
   
   
-  {"init_smuggle_"          , (DL_FUNC) &init_smuggle_          , 1},
+  {"init_smuggle_"          , (DL_FUNC) &init_smuggle_          , 2},
   {"marshall_con_smuggle_"  , (DL_FUNC) &marshall_con_smuggle_  , 2},
   {"unmarshall_con_smuggle_", (DL_FUNC) &unmarshall_con_smuggle_, 1},
   

@@ -4,10 +4,12 @@
 \alias{init_smuggle}
 \title{Init smuggle}
 \usage{
-init_smuggle(rc_xptr)
+init_smuggle(rc_xptr, wc_xptr)
 }
 \arguments{
-\item{rc_xptr}{read connection}
+\item{rc_xptr}{read connection (external pointer)}
+
+\item{wc_xptr}{write connection (external pointer)}
 }
 \value{
 None

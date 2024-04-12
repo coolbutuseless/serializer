@@ -20,8 +20,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-size_t read_connection(SEXP connection, void* buf, size_t n);
+  
+  size_t read_connection(SEXP connection, void* buf, size_t n);
+  size_t write_connection(SEXP connection, void* buf, size_t n);
 
 #ifdef __cplusplus
 }

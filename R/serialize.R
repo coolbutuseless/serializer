@@ -232,13 +232,14 @@ unmarshall_con_smuggle <- function(con) {
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #' Init smuggle
 #' 
-#' @param rc_xptr read connection
+#' @param rc_xptr read connection (external pointer)
+#' @param wc_xptr write connection (external pointer)
 #' 
 #' @return None
 #' @export
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-init_smuggle <- function(rc_xptr) {
-  .Call(init_smuggle_, rc_xptr)
+init_smuggle <- function(rc_xptr, wc_xptr) {
+  .Call(init_smuggle_, rc_xptr, wc_xptr)
 }
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
