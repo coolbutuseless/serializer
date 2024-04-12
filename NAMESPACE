@@ -2,7 +2,9 @@
 
 export(calc_serialized_size)
 export(marshall_con)
+export(marshall_file)
 export(marshall_raw)
 export(unmarshall_con)
+export(unmarshall_file)
 export(unmarshall_raw)
 useDynLib(serializer, .registration=TRUE)

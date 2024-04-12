@@ -20,6 +20,25 @@ marshall_raw <- function(robj) {
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#' Serialize an R object to a file
+#'
+#' @param robj R object
+#' @param filename filename
+#'
+#' @return None
+#' @export
+#'
+#' @examples
+#' tmp <- tempfile()
+#' marshall_file(head(mtcars), tmp)
+#' unmarshall_file(tmp)
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+marshall_file <- function(robj, filename) {
+  invisible(.Call(marshall_file_, robj, normalizePath(filename, mustWork = FALSE)))
+}
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #' Serialize an R object to a connection
 #' 
 #' @inheritParams marshall_raw
@@ -58,6 +77,24 @@ marshall_con <- function(robj, con = NULL) {
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 unmarshall_raw <- function(raw_vec) {
   .Call(unmarshall_raw_, raw_vec)
+}
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#' Unserialize an R object from a file
+#' 
+#' @param filename a file containing serialized data 
+#' 
+#' @return Return the unserialized R object
+#' @export
+#'
+#' @examples
+#' tmp <- tempfile()
+#' marshall_file(head(mtcars), tmp)
+#' unmarshall_file(tmp)
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+unmarshall_file <- function(filename) {
+  .Call(unmarshall_file_, normalizePath(filename, mustWork = TRUE))
 }
 
 

@@ -40,7 +40,8 @@ free to re-use in your own projects.
 
 * `marshall_raw()`/`unmarshall_raw()` are direct analogues for `base::serialize()` and 
   `base::unserialize()`
-* `marshall_con()`/`unmarshall_con()` are the same as above but for connections
+* `marshall_file()`/`unmarshall_file()` are the same as above but for files
+* `marshall_con()`/`unmarshall_con()` are the same as above but for connections e.g. `gzfile()`
 * `calc_serialized_size()` calculates the exact size of the serialized
   representation of an object using R's serialization infrastructure - but without
   actually performing the serialization.  This is an extremely fast calculation.
