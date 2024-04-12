@@ -230,6 +230,18 @@ unmarshall_con_smuggle <- function(con) {
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#' Init smuggle
+#' 
+#' @param rc_xptr read connection
+#' 
+#' @return None
+#' @export
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+init_smuggle <- function(rc_xptr) {
+  .Call(init_smuggle_, rc_xptr)
+}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #' Calculate the size of the R object when it is serialized
 #'
 #' This function goes through all the motions of serializing an object, but

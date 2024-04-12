@@ -11,7 +11,22 @@
 #include <unistd.h>
 
 #include "calc-serialized-size.h"
+#include "connection/connection.h"
 
+SEXP read_connection_xptr;
+
+SEXP init_smuggle_(SEXP rc_xptr) {
+  read_connection_xptr = rc_xptr;
+  R_PreserveObject(rc_xptr);
+  
+  return R_NilValue;
+}
+
+// size_t read_connection(SEXP connection, void* buf, size_t n) {
+//   auto read_connection_ptr = reinterpret_cast<size_t (*)(SEXP, void*, size_t)>(
+//     R_ExternalPtrAddr(read_connection_xptr));
+//   return read_connection_ptr(connection, buf, n);
+// }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Read a byte from the serialized stream
@@ -29,6 +44,7 @@ void read_bytes_from_connection_smuggle(R_inpstream_t stream, void *dst, int len
   
   Rconnection rcon = (Rconnection)stream->data;
   size_t nread = R_ReadConnection(rcon, dst, length);
+  // size_t nread = read_connection(stream->data, dst, length);
 
   // Sanity check that we read the requested number of bytes from the connection
   if (nread != length) {
