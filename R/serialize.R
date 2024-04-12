@@ -63,6 +63,34 @@ marshall_con <- function(robj, con = NULL) {
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#' Serialize an R object to a connection using an non-API function from R
+#'
+#' This approach will not pass \code{R CMD check} as the function `R_WriteConnection()`
+#' is not part of the R API, but it is much much faster than the officially
+#' blessed method of calling-back-into-R to write to a connection.
+#' 
+#' @inheritParams marshall_raw
+#' @param con connection to write the data to
+#'
+#' @return \code{none}
+#' @export
+#'
+#' @examples
+#' tmp <- tempfile()
+#' marshall_con_illegal(mtcars, con = gzfile(tmp))
+#' unmarshall_con_illegal(gzfile(tmp))
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+marshall_con_illegal <- function(robj, con = NULL) {
+  stopifnot(inherits(con, "connection"))
+  if(!isOpen(con)){
+    on.exit(close(con)) 
+    open(con, "wb")
+  }
+  invisible(.Call(marshall_con_illegal_, robj, con))
+}
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #' Unserialize an R object from a raw vector 
 #' 
 #' @param raw_vec A raw vector containing serialized data 
@@ -118,6 +146,33 @@ unmarshall_con <- function(con) {
   }
   .Call(unmarshall_con_, con)
 }
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#' Unserialize an R object from a connection using an non-API function from R
+#'
+#' This approach will not pass \code{R CMD check} as the function `R_ReadConnection()`
+#' is not part of the R API, but it is much much faster than the officially
+#' blessed method of calling-back-into-R to read from a connection.
+#' 
+#' @param con A connection from which to read serialized data
+#' 
+#' @return Return the unserialized R object
+#' @export
+#'
+#' @examples
+#' tmp <- tempfile()
+#' marshall_con_illegal(mtcars, con = gzfile(tmp))
+#' unmarshall_con_illegal(gzfile(tmp))
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+unmarshall_con_illegal <- function(con) {
+  if(!isOpen(con)){
+    on.exit(close(con)) 
+    open(con, "rb")
+  }
+  .Call(unmarshall_con_illegal_, con)
+}
+
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

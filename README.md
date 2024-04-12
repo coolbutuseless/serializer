@@ -22,8 +22,18 @@ your own projects.
 
 - `marshall_raw()`/`unmarshall_raw()` are direct analogues for
   `base::serialize()` and `base::unserialize()`
+- `marshall_file()`/`unmarshall_file()` are the same as above but for
+  files
 - `marshall_con()`/`unmarshall_con()` are the same as above but for
-  connections
+  connections e.g. `gzfile()`
+- `marshall_con_illegal()`/`unmarshall_con_illegal()` are the same as
+  above but for connections, and using a non-API function internal to R.
+  - This approach will not work for a package which needs to be on CRAN
+    as the code will not pass `R CMD check` because of the non-API
+    methods.
+  - For reading locally with a `file()` or `gzfile()` connection, these
+    functions are 5x to 50x faster than the “legal” way of
+    reading/writing with connections.
 - `calc_serialized_size()` calculates the exact size of the serialized
   representation of an object using R’s serialization infrastructure -
   but without actually performing the serialization. This is an
@@ -171,8 +181,8 @@ res %>%
 
 | expression                 | median | itr/sec |    MB |    GB/s |
 |:---------------------------|-------:|--------:|------:|--------:|
-| calc_serialized_size(obj1) | 5.74µs |  166146 | 120.0 | 20906.1 |
-| calc_serialized_size(obj2) | 3.12µs |  300112 |  40.0 | 12837.0 |
-| calc_serialized_size(obj3) | 1.56µs |  570836 |   5.4 |  3467.1 |
+| calc_serialized_size(obj1) | 6.33µs |  149601 | 120.0 | 18951.3 |
+| calc_serialized_size(obj2) | 3.64µs |  265866 |  40.0 | 10997.9 |
+| calc_serialized_size(obj3) | 2.38µs |  392362 |   5.4 |  2274.5 |
 
 Maximum possible throughput of serialization
