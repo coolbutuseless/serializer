@@ -2,12 +2,9 @@
 % Please edit documentation in R/serialize.R
 \name{unmarshall_con}
 \alias{unmarshall_con}
-\alias{unmarshall_con_illegal}
 \title{Unserialize an R object from a connection}
 \usage{
 unmarshall_con(con)
-
-unmarshall_con_illegal(con)
 }
 \arguments{
 \item{con}{A connection from which to read serialized data}

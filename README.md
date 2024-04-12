@@ -181,8 +181,8 @@ res %>%
 
 | expression                 | median | itr/sec |    MB |    GB/s |
 |:---------------------------|-------:|--------:|------:|--------:|
-| calc_serialized_size(obj1) | 6.33µs |  149601 | 120.0 | 18951.3 |
-| calc_serialized_size(obj2) | 3.64µs |  265866 |  40.0 | 10997.9 |
-| calc_serialized_size(obj3) | 2.38µs |  392362 |   5.4 |  2274.5 |
+| calc_serialized_size(obj1) | 9.91µs |  108476 | 120.0 | 12111.5 |
+| calc_serialized_size(obj2) | 3.62µs |  254723 |  40.0 | 11058.5 |
+| calc_serialized_size(obj3) | 2.37µs |  347898 |   5.4 |  2284.0 |
 
 Maximum possible throughput of serialization

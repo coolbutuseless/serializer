@@ -2,12 +2,9 @@
 % Please edit documentation in R/serialize.R
 \name{marshall_con}
 \alias{marshall_con}
-\alias{marshall_con_illegal}
 \title{Serialize an R object to a connection}
 \usage{
 marshall_con(robj, con = NULL)
-
-marshall_con_illegal(robj, con = NULL)
 }
 \arguments{
 \item{robj}{R object}
