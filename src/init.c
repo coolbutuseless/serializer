@@ -16,6 +16,9 @@ extern SEXP unmarshall_con_(SEXP con_);
 extern SEXP marshall_con_illegal_(SEXP robj_, SEXP con_);
 extern SEXP unmarshall_con_illegal_(SEXP con_);
 
+extern SEXP marshall_con_smuggle_(SEXP robj_, SEXP con_);
+extern SEXP unmarshall_con_smuggle_(SEXP con_);
+
 static const R_CallMethodDef CEntries[] = {
   
   {"calc_serialized_size_", (DL_FUNC) &calc_serialized_size_ , 1},
@@ -31,6 +34,9 @@ static const R_CallMethodDef CEntries[] = {
   
   {"marshall_con_illegal_"  , (DL_FUNC) &marshall_con_illegal_  , 2},
   {"unmarshall_con_illegal_", (DL_FUNC) &unmarshall_con_illegal_, 1},
+  
+  {"marshall_con_smuggle_"  , (DL_FUNC) &marshall_con_smuggle_  , 2},
+  {"unmarshall_con_smuggle_", (DL_FUNC) &unmarshall_con_smuggle_, 1},
   {NULL , NULL, 0}
 };
 
