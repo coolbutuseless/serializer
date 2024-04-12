@@ -23,9 +23,10 @@ SEXP init_smuggle_(SEXP rc_xptr) {
 }
 
 // size_t read_connection(SEXP connection, void* buf, size_t n) {
-//   auto read_connection_ptr = reinterpret_cast<size_t (*)(SEXP, void*, size_t)>(
-//     R_ExternalPtrAddr(read_connection_xptr));
-//   return read_connection_ptr(connection, buf, n);
+  // auto read_connection_ptr = reinterpret_cast<size_t (*)(SEXP, void*, size_t)>(
+    // R_ExternalPtrAddr(read_connection_xptr));
+  // (size_t (*)(SEXP, void*, size_t))func = (size_t (*)(SEXP, void*, size_t))read_connection_xptr;
+  // return (size_t (*)(SEXP, void*, size_t))(read_connection_xptr)(connection, buf, n);
 // }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
