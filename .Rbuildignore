@@ -5,3 +5,4 @@
 ^working$
 ^\.github$
 ^.devcontainer$
+^LICENSE.md$

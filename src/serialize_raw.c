@@ -120,7 +120,7 @@ SEXP unmarshall_raw_(SEXP vec_) {
 SEXP marshall_raw_(SEXP robj) {
 
   // Figure out how much memory is needed
-  int total_size = calc_serialized_size(robj);
+  R_xlen_t total_size = calc_serialized_size(robj);
 
   // Allocate an exact-sized R RAW vector to hold the result
   SEXP res_ = PROTECT(allocVector(RAWSXP, total_size));

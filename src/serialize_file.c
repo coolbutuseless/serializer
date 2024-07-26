@@ -28,7 +28,7 @@ void read_bytes_from_file(R_inpstream_t stream, void *dst, int length) {
   // Get the connection from the user data
   FILE *fp = (FILE *)stream->data;
   
-  unsigned long nread = fread(dst, 1, length, fp);
+  unsigned long nread = fread(dst, 1, (unsigned long)length, fp);
   
   // Sanity check that we read the requested number of bytes from the connection
   if (nread != length) {
@@ -51,7 +51,7 @@ void write_byte_to_file(R_outpstream_t stream, int c) {
 void write_bytes_to_file(R_outpstream_t stream, void *src, int length) {
   
   FILE *fp = (FILE *)stream->data;
-  fwrite(src, 1, length, fp);
+  fwrite(src, 1, (unsigned long)length, fp);
 }
 
 

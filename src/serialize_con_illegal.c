@@ -28,7 +28,7 @@ int read_byte_from_connection_illegal(R_inpstream_t stream) {
 void read_bytes_from_connection_illegal(R_inpstream_t stream, void *dst, int length) {
   
   Rconnection rcon = (Rconnection)stream->data;
-  size_t nread = R_ReadConnection(rcon, dst, length);
+  size_t nread = R_ReadConnection(rcon, dst, (size_t)length);
 
   // Sanity check that we read the requested number of bytes from the connection
   if (nread != length) {
@@ -50,7 +50,7 @@ void write_byte_to_connection_illegal(R_outpstream_t stream, int c) {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void write_bytes_to_connection_illegal(R_outpstream_t stream, void *src, int length) {
   Rconnection rcon = (Rconnection)stream->data;
-  R_WriteConnection(rcon, src, length);
+  R_WriteConnection(rcon, src, (size_t)length);
 }
 
 

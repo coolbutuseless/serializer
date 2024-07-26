@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-
+#include "calc-serialized-size.h"
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Write a byte into the buffer at the current location.
@@ -28,7 +28,7 @@ void count_byte(R_outpstream_t stream, int c) {
 // have to extract it first
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void count_bytes(R_outpstream_t stream, void *src, int length) {
-  int *count = (int *)stream->data;
+  R_xlen_t *count = (R_xlen_t *)stream->data;
   *count += length;
 }
 
@@ -38,10 +38,10 @@ void count_bytes(R_outpstream_t stream, void *src, int length) {
 // Serialize an R object, but only count the bytes.  
 // This function is only visible to C code
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-int calc_serialized_size(SEXP robj) {
+R_xlen_t calc_serialized_size(SEXP robj) {
 
   // Initialise the count
-  int count = 0;
+  R_xlen_t count = 0;
 
   // Create the output stream structure
   struct R_outpstream_st output_stream;
@@ -71,5 +71,5 @@ int calc_serialized_size(SEXP robj) {
 // This function is callable from R
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 SEXP calc_serialized_size_(SEXP robj) {
-  return ScalarInteger(calc_serialized_size(robj));
+  return ScalarReal((double)calc_serialized_size(robj));
 }

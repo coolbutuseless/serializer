@@ -1,4 +1,8 @@
 
+# serializer 0.2.2   2024-07-27
+
+* Support serialized sizes greater than max int
+
 # serializer 0.2.1   2024-04-10
 
 * Switch to SI size units in benchmarking.
