@@ -1,4 +1,8 @@
 
+# serializer 0.2.2.9000   2025-05-17
+
+* Add `#define R_NO_REMAP` to C source files
+
 # serializer 0.2.2   2024-07-27
 
 * Support serialized sizes greater than max int

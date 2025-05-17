@@ -1,5 +1,5 @@
 
-
+#define R_NO_REMAP
 
 #include <R.h>
 #include <Rinternals.h>
@@ -29,7 +29,7 @@ typedef struct {
 // have to extract it first
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void write_byte_to_static_buffer(R_outpstream_t stream, int c) {
-  error("write_byte_to_static_buffer(): This function is never used in binary serialization");
+  Rf_error("write_byte_to_static_buffer(): This function is never used in binary serialization");
 }
 
 
@@ -43,7 +43,7 @@ void write_bytes_to_static_buffer(R_outpstream_t stream, void *src, int length) 
   
   // Sanity check we're not writing out-of-bounds
   while (buf->pos + length > buf->length) {
-    error("write_bytes_to_static_buffer(): overflow\n");
+    Rf_error("write_bytes_to_static_buffer(): overflow\n");
   }
   
   // Copy the data and advance the 'pos' pointer
@@ -56,7 +56,7 @@ void write_bytes_to_static_buffer(R_outpstream_t stream, void *src, int length) 
 // Read a byte from the serialized stream
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 int read_byte_from_static_buffer(R_inpstream_t stream) {
-  error("read_byte_from_static_buffer(): This function is never used in binary serialization");
+  Rf_error("read_byte_from_static_buffer(): This function is never used in binary serialization");
 }
 
 
@@ -68,7 +68,7 @@ void read_bytes_from_static_buffer(R_inpstream_t stream, void *dst, int length) 
   
   // Sanity check we're not reading out-of-bounts
   if (buf->pos + length > buf->length) {
-    error("read_bytes_from_static_buffer(): overflow");
+    Rf_error("read_bytes_from_static_buffer(): overflow");
   }
   
   // copy the data and advance the 'pos' pointer
@@ -83,7 +83,7 @@ void read_bytes_from_static_buffer(R_inpstream_t stream, void *dst, int length) 
 SEXP unmarshall_raw_(SEXP vec_) {
 
   if (TYPEOF(vec_) != RAWSXP) {
-    error("unmarshall_raw_(): Argument must be a raw vector");
+    Rf_error("unmarshall_raw_(): Argument must be a raw vector");
   }
 
   // In C, we want the data as a 'void *'
@@ -123,7 +123,7 @@ SEXP marshall_raw_(SEXP robj) {
   R_xlen_t total_size = calc_serialized_size(robj);
 
   // Allocate an exact-sized R RAW vector to hold the result
-  SEXP res_ = PROTECT(allocVector(RAWSXP, total_size));
+  SEXP res_ = PROTECT(Rf_allocVector(RAWSXP, total_size));
   
   // Create a buffer object which points to the raw data
   static_buffer_t buf;

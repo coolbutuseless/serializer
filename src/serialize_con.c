@@ -1,5 +1,5 @@
 
-
+#define R_NO_REMAP
 
 #include <R.h>
 #include <Rinternals.h>
@@ -15,7 +15,7 @@
 // Read a byte from the serialized stream
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 int read_byte_from_connection(R_inpstream_t stream) {
-  error("read_byte_from_connection() never used for binary serializing");
+  Rf_error("read_byte_from_connection() never used for binary serializing");
   return 0;
 }
 
@@ -45,12 +45,12 @@ void read_bytes_from_connection(R_inpstream_t stream, void *dst, int length) {
   
   // Sanity check to see if any data returned
   if(len <= 0) {
-    error("read_bytes_from_connection() returned %ld bytes read", len);
+    Rf_error("read_bytes_from_connection() returned %ld bytes read", len);
   }
   
   // Sanity check that we read the requested number of bytes from the connection
   if (len != length) {
-    error("read_bytes_from_connection(). Expected %i bytes to be read, but actually read %ld", length, len);
+    Rf_error("read_bytes_from_connection(). Expected %i bytes to be read, but actually read %ld", length, len);
   }
   
   memcpy(dst, RAW(out), length);
@@ -62,7 +62,7 @@ void read_bytes_from_connection(R_inpstream_t stream, void *dst, int length) {
 // Read a byte from the serialized stream
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void write_byte_to_connection(R_outpstream_t stream, int c) {
-  error("write_byte_to_connection() never used for binary serializing");
+  Rf_error("write_byte_to_connection() never used for binary serializing");
 }
 
 
@@ -76,7 +76,7 @@ void write_bytes_to_connection(R_outpstream_t stream, void *src, int length) {
   
   // Create an R raw vector from the 'src' data in order to pass it
   // to an R function.
-  SEXP raw_vec_ = PROTECT(allocVector(RAWSXP, length));
+  SEXP raw_vec_ = PROTECT(Rf_allocVector(RAWSXP, length));
   memcpy(RAW(raw_vec_), src, length);
   
   // Create a call to:  writeBin(raw_vec, con)

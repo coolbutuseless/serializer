@@ -1,5 +1,5 @@
 
-
+#define R_NO_REMAP
 
 #include <R.h>
 #include <Rinternals.h>
@@ -17,7 +17,7 @@
 // have to extract it first
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void count_byte(R_outpstream_t stream, int c) {
-  error("count_byte(): This function is never called for binary serialization");
+  Rf_error("count_byte(): This function is never called for binary serialization");
 }
 
 
@@ -71,5 +71,5 @@ R_xlen_t calc_serialized_size(SEXP robj) {
 // This function is callable from R
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 SEXP calc_serialized_size_(SEXP robj) {
-  return ScalarReal((double)calc_serialized_size(robj));
+  return Rf_ScalarReal((double)calc_serialized_size(robj));
 }

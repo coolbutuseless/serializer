@@ -1,5 +1,5 @@
 
-
+#define R_NO_REMAP
 
 #include <R.h>
 #include <Rinternals.h>
@@ -17,7 +17,7 @@
 // Read a byte from the serialized stream
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 int read_byte_from_connection_illegal(R_inpstream_t stream) {
-  error("read_byte_from_connection_illegal() never used for binary serializing");
+  Rf_error("read_byte_from_connection_illegal() never used for binary serializing");
   return 0;
 }
 
@@ -32,7 +32,7 @@ void read_bytes_from_connection_illegal(R_inpstream_t stream, void *dst, int len
 
   // Sanity check that we read the requested number of bytes from the connection
   if (nread != length) {
-    error("read_bytes_from_connection_illegal(). Expected %i bytes to be read, but actually read %ld", length, nread);
+    Rf_error("read_bytes_from_connection_illegal(). Expected %i bytes to be read, but actually read %ld", length, nread);
   }
 }
 
@@ -41,7 +41,7 @@ void read_bytes_from_connection_illegal(R_inpstream_t stream, void *dst, int len
 // Read a byte from the serialized stream
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void write_byte_to_connection_illegal(R_outpstream_t stream, int c) {
-  error("write_byte_to_connection() never used for binary serializing");
+  Rf_error("write_byte_to_connection() never used for binary serializing");
 }
 
 

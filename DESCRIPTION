@@ -1,7 +1,7 @@
 Package: serializer
 Type: Package
 Title: Expose R's Serialization Interface
-Version: 0.2.2
+Version: 0.2.2.9000
 Authors@R: c(
     person("Mike", "Cheng", role = c("aut", "cre", 'cph'), email = "mikefc@coolbutuseless.com"),
     person("Henrik", "Bengtsson",
